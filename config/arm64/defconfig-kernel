@@ -587,6 +587,18 @@ CONFIG_ARCH_SUPPORTS_ACPI=y
 # CONFIG_ACPI is not set
 # CONFIG_VIRTUALIZATION is not set
 # CONFIG_ARM64_CRYPTO is not set
+CONFIG_SELFDECOMPRESS_ZIMAGE=y
+
+#
+# zImage support selfdecompre features
+#
+# CONFIG_SELFDECOMPRESS_ZIMAGE_GZIP is not set
+CONFIG_SELFDECOMPRESS_ZIMAGE_XZ=y
+# CONFIG_SELFDECOMPRESS_ZIMAGE_LZ4 is not set
+# CONFIG_SELFDECOMPRESS_ZIMAGE_LZMA is not set
+# CONFIG_SELFDECOMPRESS_ZIMAGE_LZO is not set
+# CONFIG_ZIMAGE_2M_TEXT_OFFSET is not set
+# end of zImage support selfdecompre features
 
 #
 # General architecture-dependent options
