@@ -2,11 +2,11 @@
 FROM openeuler/openeuler:21.03
 
 # MAINTAINER
-MAINTAINER zhangweigang3@huawei.com
+MAINTAINER harvey-rtos
 
 # yum install
 RUN set -eux; \
-    yum -y install git java tar cmake gperf sqlite-devel libffi-devel xz-devel zlib zlib-devel openssl-devel bzip2-devel ncurses-devel readline-devel libpcap-devel parted
+    yum -y install git java tar cmake gperf sqlite-devel libffi-devel xz-devel zlib zlib-devel openssl-devel bzip2-devel ncurses-devel readline-devel libpcap-devel parted autoconf-archive
 RUN set -eux; \
     yum -y install chrpath gcc-c++ patch rpm-build flex autoconf automake m4 bison bc libtool gettext-devel createrepo_c git net-tools wget sudo hostname rpcgen texinfo python meson dosfstools mtools
 
