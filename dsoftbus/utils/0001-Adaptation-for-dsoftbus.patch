@@ -1,19 +1,19 @@
-From 6c8e26048e418b8476d86ce1938ac26da4597c65 Mon Sep 17 00:00:00 2001
+From ecb011a769e1b403a9b0d4203ac3f8b7c1c77228 Mon Sep 17 00:00:00 2001
 From: "beiling.xie" <xiekunxun@huawei.com>
-Date: Wed, 23 Mar 2022 22:05:23 +0800
+Date: Wed, 23 Mar 2022 22:48:56 +0800
 Subject: [PATCH] Adaptation for dsoftbus
 
 Signed-off-by: beiling.xie <xiekunxun@huawei.com>
 ---
- base/BUILD.gn       | 154 ++------------------------------------------
+ base/BUILD.gn       | 145 +-------------------------------------------
  base/src/parcel.cpp |   1 +
- 2 files changed, 5 insertions(+), 150 deletions(-)
+ 2 files changed, 4 insertions(+), 142 deletions(-)
 
 diff --git a/base/BUILD.gn b/base/BUILD.gn
-index 81edf0a..d5bd2e6 100644
+index 318bbe7..2c9d6db 100644
 --- a/base/BUILD.gn
 +++ b/base/BUILD.gn
-@@ -14,169 +14,23 @@ import("//build/ohos.gni")
+@@ -14,161 +14,22 @@ import("//build/ohos.gni")
  
  ###############################################################################
  config("utils_config") {
@@ -26,10 +26,6 @@ index 81edf0a..d5bd2e6 100644
 -  if (current_os == "mingw") {
 -    cflags += [ "-Wno-error=inconsistent-dllimport" ]
 -  }
--}
--
--config("private_securec_config") {
--  cflags = [ "-Wno-implicit-fallthrough" ]
 -}
 -
 -config("static_utils_config") {
@@ -45,7 +41,7 @@ index 81edf0a..d5bd2e6 100644
 -  "src/unicode_ex.cpp",
 -  "src/directory_ex.cpp",
 -  "src/datetime_ex.cpp",
--  "src/refbase.cpp",
+   "src/refbase.cpp",
    "src/parcel.cpp",
 -  "src/semaphore_ex.cpp",
 -  "src/thread_pool.cpp",
@@ -59,7 +55,66 @@ index 81edf0a..d5bd2e6 100644
 -  "src/timer_event_handler.cpp",
 -  "src/ashmem.cpp",
 -  "src/rwlock.cpp",
--]
+-  "src/securec/fscanf_s.c",
+-  "src/securec/fwscanf_s.c",
+-  "src/securec/gets_s.c",
+-  "src/securec/memcpy_s.c",
+-  "src/securec/memmove_s.c",
+-  "src/securec/memset_s.c",
+-  "src/securec/scanf_s.c",
+-  "src/securec/securecutil.c",
+-  "src/securec/secureinput_a.c",
+-  "src/securec/secureinput_w.c",
+-  "src/securec/secureprintoutput_a.c",
+-  "src/securec/secureprintoutput_w.c",
+-  "src/securec/snprintf_s.c",
+-  "src/securec/sprintf_s.c",
+-  "src/securec/sscanf_s.c",
+-  "src/securec/strcat_s.c",
+-  "src/securec/strcpy_s.c",
+-  "src/securec/strncat_s.c",
+-  "src/securec/strncpy_s.c",
+-  "src/securec/strtok_s.c",
+-  "src/securec/swprintf_s.c",
+-  "src/securec/swscanf_s.c",
+-  "src/securec/vfscanf_s.c",
+-  "src/securec/vfwscanf_s.c",
+-  "src/securec/vscanf_s.c",
+-  "src/securec/vsnprintf_s.c",
+-  "src/securec/vsprintf_s.c",
+-  "src/securec/vsscanf_s.c",
+-  "src/securec/vswprintf_s.c",
+-  "src/securec/vswscanf_s.c",
+-  "src/securec/vwscanf_s.c",
+-  "src/securec/wcscat_s.c",
+-  "src/securec/wcscpy_s.c",
+-  "src/securec/wcsncat_s.c",
+-  "src/securec/wcsncpy_s.c",
+-  "src/securec/wcstok_s.c",
+-  "src/securec/wmemcpy_s.c",
+-  "src/securec/wmemmove_s.c",
+-  "src/securec/wscanf_s.c",
+ ]
+ 
+-ohos_static_library("utilsbase") {
+-  sources = sources_utils
+-  configs = [ ":utils_config" ]
+-  defines = [ "CONFIG_HILOG" ]
+-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+-}
+-
+ ohos_shared_library("utils") {
+   sources = sources_utils
+-  configs = [ ":utils_config" ]
+-  subsystem_name = "utils"
+-  defines = [ "CONFIG_HILOG" ]
+-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+-  part_name = "utils_base"
+-  install_images = [
+-    "system",
+-    "updater",
+-  ]
+-}
 -
 -securec_sources = [
 -  "src/securec/fscanf_s.c",
@@ -102,93 +157,29 @@ index 81edf0a..d5bd2e6 100644
 -  "src/securec/wmemcpy_s.c",
 -  "src/securec/wmemmove_s.c",
 -  "src/securec/wscanf_s.c",
-+  "src/refbase.cpp",
- ]
- 
--ohos_static_library("utilsbase") {
--  sources = sources_utils
--  sources += securec_sources
--  configs = [
--    ":utils_config",
--    ":private_securec_config",
--  ]
--  public_configs = [ ":static_utils_config" ]
--  defines = [ "CONFIG_HILOG" ]
--  external_deps = [ "hilog_native:libhilog_base" ]
--
--  subsystem_name = "utils"
--  part_name = "utils_base"
--}
--
- ohos_shared_library("utils") {
-   sources = sources_utils
--  sources += securec_sources
--  configs = [
--    ":utils_config",
--    ":private_securec_config",
--  ]
--  public_configs = [ ":static_utils_config" ]
--  subsystem_name = "utils"
--  defines = [ "CONFIG_HILOG" ]
--  external_deps = [ "hilog_native:libhilog_base" ]
--  part_name = "utils_base"
--  install_images = [
--    "system",
--    "updater",
--  ]
--}
+-]
 -
 -ohos_static_library("utilsecurec") {
 -  sources = securec_sources
--  configs = [
--    ":utils_config",
--    ":private_securec_config",
--  ]
--  public_configs = [ ":static_utils_config" ]
--  subsystem_name = "utils"
--  part_name = "utils_base"
+-  configs = [ ":utils_config" ]
 +  public_configs = [ ":utils_config" ]
 +  deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
  }
  
--ohos_static_library("utilsecurec_ace_allplatforms") {
--  sources = [ "src/securec/vsnprintf_s_p.c" ]
--  if (current_os == "mingw") {
--    sources += [
--      "src/securec/memset_s.c",
--      "src/securec/securecutil.c",
--      "src/securec/secureinput_w.c",
--      "src/securec/secureprintoutput_a.c",
--      "src/securec/secureprintoutput_w.c",
--    ]
--    cflags = [ "-Wno-inconsistent-dllimport" ]
--  }
--  configs = [
--    ":utils_config",
--    ":private_securec_config",
--  ]
--  public_configs = [ ":static_utils_config" ]
--  subsystem_name = "utils"
--  part_name = "utils_base"
-+group("utilsecurec_shared") {
- }
- 
 -ohos_shared_library("utilsecurec_shared") {
 -  sources = securec_sources
--  configs = [
--    ":utils_config",
--    ":private_securec_config",
--  ]
+-  configs = [ ":utils_config" ]
 -  public_configs = [ ":utils_config" ]
 -  part_name = "utils_base"
 -  install_images = [
 -    "system",
 -    "updater",
 -  ]
--}
++group("utilsecurec_shared") {
+ }
  ###############################################################################
 diff --git a/base/src/parcel.cpp b/base/src/parcel.cpp
-index 855f7cf..043fff8 100755
+index 83621f2..915f8ca 100755
 --- a/base/src/parcel.cpp
 +++ b/base/src/parcel.cpp
 @@ -16,6 +16,7 @@
