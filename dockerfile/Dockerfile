@@ -2,13 +2,11 @@
 FROM openeuler/openeuler:21.03
 
 # MAINTAINER
-MAINTAINER harvey-rtos
+MAINTAINER harvey
 
 # yum install
 RUN set -eux; \
-    yum -y install git java tar cmake gperf sqlite-devel libffi-devel xz-devel zlib zlib-devel openssl-devel bzip2-devel ncurses-devel readline-devel libpcap-devel parted autoconf-archive
-RUN set -eux; \
-    yum -y install chrpath gcc-c++ patch rpm-build flex autoconf automake m4 bison bc libtool gettext-devel createrepo_c git net-tools wget sudo hostname rpcgen texinfo python meson dosfstools mtools
+    yum -y install git java tar cmake gperf sqlite-devel libffi-devel xz-devel zlib zlib-devel openssl-devel bzip2-devel ncurses-devel readline-devel libpcap-devel parted autoconf-archive chrpath gcc-c++ patch rpm-build flex autoconf automake m4 bison bc libtool gettext-devel createrepo_c git net-tools wget sudo hostname rpcgen texinfo python meson dosfstools mtools libmpc-devel gmp-devel
 
 # gcc install
 ARG tools_dir=/usr1/tools
@@ -16,8 +14,8 @@ ARG gcc_install_dir=/usr1/openeuler/gcc
 
 # change dir to workdir and star install
 WORKDIR ${gcc_install_dir}
-RUN wget https://gitee.com/openeuler/yocto-embedded-tools/attach_files/911964/download/openeuler_gcc_arm32le.tar.xz -P ${tools_dir}
-RUN wget https://gitee.com/openeuler/yocto-embedded-tools/attach_files/911963/download/openeuler_gcc_arm64le.tar.xz -P ${tools_dir}
+RUN wget https://gitee.com/openeuler/yocto-embedded-tools/attach_files/1003462/download/openeuler_gcc_arm64le.tar.xz -P ${tools_dir}
+RUN wget https://gitee.com/openeuler/yocto-embedded-tools/attach_files/1003463/download/openeuler_gcc_arm32le.tar.xz -P ${tools_dir}
 
 # change dir to workdir and unpack
 WORKDIR ${gcc_install_dir}
@@ -67,14 +65,14 @@ WORKDIR /usr1
 RUN rm -rf tools
 
 ARG VERSION=4.3
-ARG user=huawei
-ARG group=huawei
+ARG user=openeuler
+ARG group=openeuler
 ARG uid=1000
 ARG gid=1000
 ARG AGENT_WORKDIR=/home/agent
 
 # add build user
 RUN groupadd -g ${gid} ${group}
-RUN useradd -c "huawei" -d /home/${user} -u ${uid} -g ${gid} -m ${user}
+RUN useradd -c "openeuler" -d /home/${user} -u ${uid} -g ${gid} -m ${user}
 RUN echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
