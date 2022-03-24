@@ -1,0 +1,48 @@
+import("//build/ohos.gni")
+
+config("device_auth_config") {
+  include_dirs = [ "device_auth/include" ]
+}
+
+ohos_shared_library("deviceauth_sdk") {
+  sources = [ "device_auth/device_auth.c" ]
+  public_configs = [ ":device_auth_config" ]
+}
+
+config("hilog_config") {
+  include_dirs = [ "hilog/include" ]
+}
+
+ohos_shared_library("libhilog") {
+  public_configs = [ ":hilog_config" ]
+}
+
+config("ipc_config") {
+  include_dirs = [ "ipc/include", "//utils/native/base/include" ]
+}
+
+ohos_shared_library("ipc_single") {
+  public_configs = [ ":ipc_config" ]
+}
+
+group("ipc_core") {
+  public_configs = [ ":ipc_config" ]
+}
+
+group("system_ability_fwk") {
+}
+
+group("samgr_proxy") {
+}
+
+group("libpermissionsdk_standard") {
+}
+
+group("cesfwk_innerkits") {
+}
+
+group("want") {
+}
+
+group("appexecfwk_core") {
+}
