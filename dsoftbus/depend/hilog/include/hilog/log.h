@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-#define HILOG_DEBUG(type, fmt, ...) printf(fmt, ##__VA_ARGS__)
-#define HILOG_INFO(type, fmt, ...)  printf(fmt, ##__VA_ARGS__)
-#define HILOG_WARN(type, fmt, ...)  printf(fmt, ##__VA_ARGS__)
-#define HILOG_ERROR(type, fmt, ...) printf(fmt, ##__VA_ARGS__)
+#define HILOG_DEBUG(type, fmt, ...) printf(fmt"\n", ##__VA_ARGS__)
+#define HILOG_INFO(type, fmt, ...)  printf(fmt"\n", ##__VA_ARGS__)
+#define HILOG_WARN(type, fmt, ...)  printf(fmt"\n", ##__VA_ARGS__)
+#define HILOG_ERROR(type, fmt, ...) printf(fmt"\n", ##__VA_ARGS__)
 
 #endif
