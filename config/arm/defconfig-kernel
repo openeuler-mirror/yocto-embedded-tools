@@ -1030,7 +1030,7 @@ CONFIG_IP6_NF_TARGET_REJECT=m
 # CONFIG_IP6_NF_MANGLE is not set
 # CONFIG_IP6_NF_RAW is not set
 # CONFIG_IP6_NF_SECURITY is not set
-# CONFIG_IP6_NF_NAT is not set
+CONFIG_IP6_NF_NAT=m
 # end of IPv6: Netfilter Configuration
 
 CONFIG_NF_DEFRAG_IPV6=m
