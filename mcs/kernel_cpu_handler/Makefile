@@ -1,4 +1,4 @@
-KERNELDIR := ${DL_SDK_KERNELDIR}
+KERNELDIR := ${KERNEL_SRC_DIR}
 CURRENT_PATH := $(shell pwd)
 
 target := cpu_handler_dev
