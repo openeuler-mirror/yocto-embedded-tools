@@ -21,11 +21,28 @@ config("ipc_config") {
   include_dirs = [ "ipc/include", "//utils/native/base/include" ]
 }
 
-ohos_shared_library("ipc_single") {
+group("ipc_single") {
+  deps = [ "//depend:ipc_core" ]
   public_configs = [ ":ipc_config" ]
 }
 
-group("ipc_core") {
+ohos_shared_library("ipc_core") {
+  include_dirs = [
+    "ipc/include",
+  ]
+
+  sources = [
+    "ipc/ipc_center.cpp",
+    "ipc/ipc_object_stub.cpp",
+    "ipc/ipc_skeleton.cpp",
+    "ipc/iremote_object.cpp",
+    "ipc/message_parcel.cpp",
+  ]
+
+  deps = [
+    "//utils/native/base:utils",
+  ]
+
   public_configs = [ ":ipc_config" ]
 }
 
