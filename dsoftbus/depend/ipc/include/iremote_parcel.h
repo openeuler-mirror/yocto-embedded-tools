@@ -1,1 +1,1 @@
-#include "depend.h"
+/* empty head files for compile */
