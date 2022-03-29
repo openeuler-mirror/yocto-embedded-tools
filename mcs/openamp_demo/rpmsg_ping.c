@@ -46,6 +46,7 @@ static void virtio_notify(struct virtqueue *vq)
 	(void)vq;
 	int cpu_handler_fd;
 	int ret;
+	int cpu_num = strtol(cpu_id, NULL, 0);
 
 	cpu_handler_fd = open(DEV_CLIENT_OS_AGENT, O_RDWR);
 	if (cpu_handler_fd < 0) {
@@ -53,7 +54,7 @@ static void virtio_notify(struct virtqueue *vq)
 		return;
 	}
 
-	ret = ioctl(cpu_handler_fd, IRQ_SENDTO_CLIENTOS, 3);
+	ret = ioctl(cpu_handler_fd, IRQ_SENDTO_CLIENTOS, cpu_num);
 	if (ret) {
 		printf("send ipi tp second os failed\n");
 	}
