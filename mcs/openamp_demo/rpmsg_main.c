@@ -14,7 +14,7 @@
 static struct remoteproc rproc_inst;
 static struct remoteproc_ops ops;
 
-static char *cpu_id;
+char *cpu_id;
 static char *boot_address;
 static char *target_binfile;
 static char *target_binaddr;
@@ -52,6 +52,7 @@ static int load_bin(void)
     access_address = mmap((void *)bin_addr, MAX_BIN_BUFLEN, PROT_READ | PROT_WRITE,
                             MAP_SHARED, memfd, bin_addr);
     memcpy(access_address, bin_buffer, bin_size);
+    free(bin_buffer);
     return 0;
 }
 

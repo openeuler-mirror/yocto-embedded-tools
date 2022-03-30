@@ -5,7 +5,7 @@
 #include <openamp/rpmsg.h>
 #include <openamp/rpmsg_virtio.h>
 
-#define VDEV_START_ADDR            0xD0000000
+#define VDEV_START_ADDR            0x70000000
 #define VDEV_SIZE                  0x30000
 
 #define VDEV_STATUS_ADDR           VDEV_START_ADDR
@@ -22,6 +22,8 @@
 
 #define IRQ_SENDTO_CLIENTOS        _IOW('A', 0, int)
 #define DEV_CLIENT_OS_AGENT        "/dev/cpu_handler"
+
+extern char *cpu_id;
 
 void rpmsg_app_master(void);
 #endif
