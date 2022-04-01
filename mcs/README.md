@@ -56,12 +56,14 @@ OpenAMP包括如下三大重要组件：
 
 1.  通过QEMU启动openEuler Embedded镜像，如何启动可参考使用手册中QEMU使用与调试章节。
 
-以上述demo为例，需要预留出地址0x70000000为起始的内存用于OpenAMP demo和Client OS启动。通过QEMU启动时，当指定-m 1G时默认使用0x40000000-0x80000000的系统内存。添加内核启动参数mem=768M，可预留地址为0x70000000-0x80000000的256M内存。另外，在样例中在cpu 3启动Client OS，需要预留出3号cpu。
+-以上述demo为例，需要预留出地址0x70000000为起始的内存用于OpenAMP demo和Client OS启动。通过QEMU启动时，当指定-m 1G时默认使用0x40000000-0x80000000的系统内存。添加内核启动参数mem=768M，可预留地址为0x70000000-0x80000000的256M内存。
+-在样例中在cpu 3启动Client OS，需要预留出3号cpu。
+-样例中zephyr镜像默认gic版本为3，需要在QEMU中设置。
 
 可参考如下命令进行启动：
 
 ````
-    qemu-system-aarch64 -M virt -m 1G -cpu cortex-a57 -nographic -kernel zImage -initrd initrd -append 'mem=768M maxcpus=3' -smp 4 
+    qemu-system-aarch64 -M virt,gic_version=3 -m 1G -cpu cortex-a57 -nographic -kernel zImage -initrd initrd -append 'mem=768M maxcpus=3' -smp 4 
 ````
 
 2.  在openEuler Embedded系统上插入内核KO模块cpu_handler_dev.ko。
