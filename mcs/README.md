@@ -63,8 +63,10 @@ OpenAMP包括如下三大重要组件：
 可参考如下命令进行启动：
 
 ````
-    qemu-system-aarch64 -M virt,gic_version=3 -m 1G -cpu cortex-a57 -nographic -kernel zImage -initrd initrd -append 'mem=768M maxcpus=3' -smp 4 
+    qemu-system-aarch64 -M virt,gic-version=3 -m 1G -cpu cortex-a57 -nographic -kernel zImage -initrd initrd -append 'mem=768M maxcpus=3' -smp 4 
 ````
+
+当使用的QEMU版本过老时可能会由于内存分布不一致导致段错误，可升级QEMU版本或手动修改DTB空出对应内存。
 
 2.  在openEuler Embedded系统上插入内核KO模块cpu_handler_dev.ko。
 
