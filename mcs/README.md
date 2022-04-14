@@ -10,7 +10,7 @@ kernel_cpu_handler:  提供OpenAMP所需内核模块，支持Client OS启动、�
 
 openamp_demo: 提供OpenAMP用户态程序Linux端样例，支持与指定Client OS进行通信。
 
-zephyr: 提供样例zephyr.bin镜像文件，该文件需要被加载至0x7a000000的起始地址，并在0x7a00ffc的地址进行启动。启动后会运行OpenAMP Client端的样例程序，并与Linux端进行交互。
+zephyr: 提供样例zephyr.bin镜像文件，该文件需要被加载至0x7a000000的起始地址，并在0x7a000ffc的地址进行启动。启动后会运行OpenAMP Client端的样例程序，并与Linux端进行交互。
 
 #### 原理简介
 
