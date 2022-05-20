@@ -1,0 +1,3 @@
+[update-rc.d]
+from:
+git://git.yoctoproject.org/update-rc.d
