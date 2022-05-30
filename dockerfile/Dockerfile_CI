@@ -1,64 +1,35 @@
 # base image
-FROM openeuler/openeuler:21.03
+FROM openeuler/openeuler:22.03-lts
 
 # MAINTAINER
 MAINTAINER harvey
 
 # yum install
 RUN set -eux; \
-    yum -y install git java tar cmake gperf sqlite-devel libffi-devel xz-devel zlib zlib-devel openssl-devel bzip2-devel ncurses-devel readline-devel libpcap-devel parted autoconf-archive chrpath gcc-c++ patch rpm-build flex autoconf automake m4 bison bc libtool gettext-devel createrepo_c git net-tools wget sudo hostname rpcgen texinfo python meson dosfstools mtools libmpc-devel gmp-devel
+    yum -y install git java tar cmake gperf sqlite-devel libffi-devel xz-devel zlib zlib-devel openssl-devel bzip2-devel ncurses-devel readline-devel libpcap-devel parted autoconf-archive chrpath gcc-c++ patch rpm-build flex autoconf automake m4 bison bc libtool gettext-devel createrepo_c git net-tools wget sudo hostname rpcgen texinfo python meson dosfstools mtools libmpc-devel gmp-devel ninja-build numactl-devel make
 
 # gcc install
 ARG tools_dir=/usr1/tools
 ARG gcc_install_dir=/usr1/openeuler/gcc
 
 # change dir to workdir and star install
-WORKDIR ${gcc_install_dir}
-RUN wget https://gitee.com/openeuler/yocto-embedded-tools/attach_files/1003462/download/openeuler_gcc_arm64le.tar.xz -P ${tools_dir}
-RUN wget https://gitee.com/openeuler/yocto-embedded-tools/attach_files/1003463/download/openeuler_gcc_arm32le.tar.xz -P ${tools_dir}
+WORKDIR ${tools_dir}
+RUN wget https://repo.openeuler.org/openEuler-22.03-LTS/EPOL/main/x86_64/Packages/gcc-cross-1.0-0.oe2203.x86_64.rpm -P ${tools_dir}
+RUN rpm2cpio ${tools_dir}/gcc-cross-1.0-0.oe2203.x86_64.rpm | cpio -id
 
 # change dir to workdir and unpack
 WORKDIR ${gcc_install_dir}
-RUN tar -xf ${tools_dir}/openeuler_gcc_arm32le.tar.xz
+RUN tar -xf ${tools_dir}/tmp/openeuler_gcc_arm32le.tar.gz
 RUN find ./openeuler_gcc_arm32le -type d | xargs chmod go+x
 RUN chmod go+r ./openeuler_gcc_arm32le -R
+RUN chmod -R 755 /usr1/openeuler/gcc/openeuler_gcc_arm32le/bin
 
-RUN tar -xf ${tools_dir}/openeuler_gcc_arm64le.tar.xz
+RUN tar -xf ${tools_dir}/tmp/openeuler_gcc_arm64le.tar.gz
 RUN find ./openeuler_gcc_arm64le -type d | xargs chmod go+x
 RUN chmod go+r ./openeuler_gcc_arm64le -R
+RUN chmod -R 755 /usr1/openeuler/gcc/openeuler_gcc_arm64le/bin
+RUN find ./ | xargs chmod go+x
 
-# python install
-ARG python_install_dir=/opt/buildtools/python-3.9.2
-
-# change dir to workdir and start install
-WORKDIR /usr1/tools
-RUN wget https://www.python.org/ftp/python/3.9.2/Python-3.9.2.tgz
-RUN tar -xf Python-3.9.2.tgz
-RUN rm -rf /usr/local/bin/python3 /usr/local/bin/python
-WORKDIR /usr1/tools/Python-3.9.2
-RUN ./configure --prefix=/opt/buildtools/python-3.9.2 --enable-loadable-sqlite-extensions
-RUN make -j 8 && make install
-RUN ln -s ${python_install_dir}/bin/python3 /usr/local/bin/python3
-RUN ln -s ${python_install_dir}/bin/python3 /usr/local/bin/python
-RUN export PYTHONPATH=${python_install_dir}/lib64/python3.9/lib-dynload/
-RUN export PYTHONPATH="${python_install_dir}/lib/python3.9/site-packages/:${python_install_dir}:${python_install_dir}/lib64/python3.9/lib-dynload/"
-
-# ninja install
-ARG ninja_install_dir="/opt/buildtools/ninja-1.10.1"
-
-# change dir to workdir and start install
-WORKDIR /usr1/tools
-RUN wget https://distfiles.macports.org/ninja/ninja-1.10.1.tar.gz
-RUN tar -xf ninja-1.10.1.tar.gz
-WORKDIR /usr1/tools/ninja-1.10.1
-RUN sed -ie '1c#!/usr/bin/env python3' *.py
-RUN ./configure.py --bootstrap
-RUN mkdir -p ${ninja_install_dir}/bin
-RUN install -m 0755 ./ninja ${ninja_install_dir}/bin
-
-# change access permission
-WORKDIR /opt/buildtools
-RUN find ./ -type d | xargs chmod 755
 
 # clean install package
 WORKDIR /usr1
