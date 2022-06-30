@@ -1,121 +1,20 @@
 #include <stdio.h>
+#include <vector>
 #include <string.h>
 #include <curses.h>
 #include <unistd.h>
-/*
-void PublishSuccess(int publishId)
-{
-	printf("CB: publish %d done", publishId);
-}
 
-void PublishFailed(int publishId, PublishFailReason reason)
-{
-	printf("CB: publish %d failed, reason=%d\n", publishId, (int)reason);
-}
+#include "dsoftbus/discovery_service.h"
+#include "dsoftbus/softbus_bus_center.h"
+#include "dsoftbus/session.h"
 
-void DeviceFound(const DeviceInfo *device)
-{
-	printf("CB: a device found id=%s name=%s\n", device->devId, device->devName);
-}
-
-void DiscoverySuccess(int subscribeId)
-{
-	printf("CB: discover subscribeId=%d\n", subscribeId);
-}
-
-void DiscoveryFailed(int subscribeId, DiscoveryFailReason reason)
-{
-	printf("CB: discover subscribeId=%d failed, reason=%d\n", subscribeId, (int)reason);
-}
-
-void SessionOpened(int sessionId, int result)
-{
-	printf("CB: session %d open ret=%d\n", subscribeId, result);
-}
-
-void SessionClosed(int sessionId)
-{
-	printf("CB: session $d closed\n", sessionId);
-}
-
-void ByteRecived(int sessionId, const void *data, unsigned int dataLen)
-{
-	printf("CB: session %d received %u bytes data=%s\n", sessionId, dataLen, (const char *)data);
-}
-
-void MessageReceived(int sessionId, const void *data, unsigned int dataLen)
-{
-	printf("CB: session %d received %u bytes message=%s\n", sessionId, dataLen, (const char *)data);
-}
-
-unsigned char cData[] = "My Client Test";
-
-int PublishServiceInterface()
-{
-	PublishInfo info = {
-		.publishId = 123,
-		.mode = DISCOVER_MODE_ACTIVE,
-		.medium = COAP,
-		.freq = LOW,
-		.capability = "hicall",
-		capabilityData = cData,
-		dataLen = sizeof(cData),
-	};
-	IPublishCallback cb = {
-		.OnPublishSucess = PublishSuccess,
-		.OnPublishFail = PublishFailed,
-	};
-	return PublishService(clientName, &info, &cb);
-}
-
-int DiscoveryInterface()
-{
-	SubscribeInfo info = {
-		.subscribeId = 123,
-		.mode = DISCOVER_MODE_ACTIVE,
-		.medium = COAP,
-		.freq = LOW,
-		.isSameAccount = false,
-		.isWakeRemote = false,
-		.capability = "hicall",
-		.capabilityData = cData,
-		.dataLen = sizeof(cData),
-	};
-	IDiscoveryCallback cb = {
-		.OnDeviceFound = DeviceFound,
-		.OnDiscoverFailed = DiscoveryFailed,
-		.OnDiscoverySuccesss = DiscoverySuccess,
-	};
-	return StartDiscovery(clientName, &info, &cb);
-}
-
-int CreateSessionServerInterface(const char *SessionName)
-{
-	ISessionListener cb = {
-		.OnSessionOpened = SessionOpened,
-		.OnSessionClosed = SessionClosed,
-		.OnBytesReceived = ByteRecived,
-		.OnMessageReceived = MessageReceived,
-	};
-	return CreateSessionServer(clientName, SessionName, &cb);
-}
-
-int OpenSessionInterface(const char *SessionName, const char *peerName, const char *peerId)
-{
-	SessionAttrbute attr = {
-		.dataType = TYPE_BYTES,
-		.lintTypeNum = 1,
-		attr = {RAW_STREAM},
-	};
-	int lt = LINK_TYPE_WIFI_P2P;
-	attr.lintType = &lt;
-	return OpenSession(SessionName, peerName, peerId, "MyGroup", &attr);
-}
-*/
+std::vector<const DeviceInfo * > devList;
 
 bool hasPublish = false;
 bool hasDiscovery = false;
 const size_t LINE_WIDTH = 80;
+
+#define clientName "Client"
 
 void PrintMargin()
 {
@@ -162,92 +61,257 @@ void PrintMessage(const char *msg)
 	}
 }
 
-void DisplayMain()
+void DisplayTitle()
 {
-	char msg[256];
 	erase();
 	PrintMargin();
 	PrintTitle("openEuler");
 	PrintTitle("SoftBus");
 	PrintTitle("");
 	PrintTitle("");
+}
+
+void DisplayMain()
+{
+	DisplayTitle();
+	PrintTitle("");
 	PrintTitle("");
 	PrintTitle("");
 	PrintMessage("Press key:");
-	strcpy(msg, hasPublish ? "[U]UnpublishService" : "[P]PublishService  ");
-	strcat(msg, "      ");
-	strcat(msg, hasDiscovery ? "[S]StopDiscovery   " : "[D]DiscoveryService");
-	PrintMessage(msg);
-	PrintMessage("[T]DataTransmission");
+	PrintMessage("[D]DiscoveryService       [T]DataTransmission");
 	PrintTitle("");
 	PrintTitle("");
 	PrintMargin();
 }
 
-void DataTransmission()
+void DisplayDevList()
+{
+	char msg[256];
+	DisplayTitle();
+	PrintTitle("");
+	PrintTitle("");
+	PrintMessage("Press key:");
+	PrintMessage("[S]StopDiscovery");
+	PrintMessage("Devices list:");
+	for (size_t i = 0; i < devList.size(); ++i)
+		PrintMessage(devList[i]->devId);
+	PrintTitle("");
+	PrintMargin();
+}
+
+void PublishSuccess(int publishId)
+{
+	printf("CB: publish %d done", publishId);
+}
+
+void PublishFailed(int publishId, PublishFailReason reason)
+{
+	printf("CB: publish %d failed, reason=%d\n", publishId, (int)reason);
+}
+
+void DeviceFound(const DeviceInfo *device)
+{
+	devList.push_back(device);
+	DisplayDevList();
+}
+
+void DiscoverySuccess(int subscribeId)
+{
+	printf("CB: discover subscribeId=%d\n", subscribeId);
+}
+
+void DiscoveryFailed(int subscribeId, DiscoveryFailReason reason)
+{
+	printf("CB: discover subscribeId=%d failed, reason=%d\n", subscribeId, (int)reason);
+}
+
+int SessionOpened(int sessionId, int result)
+{
+	printf("CB: session %d open ret=%d\n", sessionId, result);
+	return 0;
+}
+
+void SessionClosed(int sessionId)
+{
+	printf("CB: session %d closed\n", sessionId);
+}
+
+void ByteRecived(int sessionId, const void *data, unsigned int dataLen)
+{
+	printf("CB: session %d received %u bytes data=%s\n", sessionId, dataLen, (const char *)data);
+}
+
+void MessageReceived(int sessionId, const void *data, unsigned int dataLen)
+{
+	printf("CB: session %d received %u bytes message=%s\n", sessionId, dataLen, (const char *)data);
+}
+
+unsigned char cData[] = "My Client Test";
+
+int PublishServiceInterface()
+{
+	PublishInfo info = {
+		.publishId = 123,
+		.mode = DISCOVER_MODE_ACTIVE,
+		.medium = COAP,
+		.freq = LOW,
+		.capability = "hicall",
+		.capabilityData = cData,
+		.dataLen = sizeof(cData),
+	};
+	IPublishCallback cb = {
+		.OnPublishSuccess = PublishSuccess,
+		.OnPublishFail = PublishFailed,
+	};
+	return PublishService(clientName, &info, &cb);
+}
+
+int DiscoveryInterface()
+{
+	SubscribeInfo info = {
+		.subscribeId = 123,
+		.mode = DISCOVER_MODE_ACTIVE,
+		.medium = COAP,
+		.freq = LOW,
+		.isSameAccount = false,
+		.isWakeRemote = false,
+		.capability = "hicall",
+		.capabilityData = cData,
+		.dataLen = sizeof(cData),
+	};
+	IDiscoveryCallback cb = {
+		.OnDeviceFound = DeviceFound,
+		.OnDiscoverFailed = DiscoveryFailed,
+		.OnDiscoverySuccess = DiscoverySuccess,
+	};
+	return StartDiscovery(clientName, &info, &cb);
+}
+
+int CreateSessionServerInterface(const char *SessionName)
+{
+	ISessionListener cb = {
+		.OnSessionOpened = SessionOpened,
+		.OnSessionClosed = SessionClosed,
+		.OnBytesReceived = ByteRecived,
+		.OnMessageReceived = MessageReceived,
+	};
+	return CreateSessionServer(clientName, SessionName, &cb);
+}
+
+int OpenSessionInterface(const char *SessionName, const char *peerName, const char *peerId)
+{
+	SessionAttribute attr = {
+		.dataType = TYPE_BYTES,
+		.lintTypeNum = 1,
+		.attr = {RAW_STREAM},
+	};
+	int lt = LINK_TYPE_WIFI_P2P;
+	attr.lintType = &lt;
+	return OpenSession(SessionName, peerName, peerId, "MyGroup", &attr);
+}
+
+void Discovering()
+{
+	DiscoveryInterface();
+	while (true) {
+		DisplayDevList();
+		char op = getch();
+		if (op == 'S' || op == 's') {
+			break;
+		}
+	}
+}
+
+void SendData()
 {
 	NodeBasicInfo *dev;
 	int32_t dev_num;
 	GetAllNodeDeviceInfo(clientName, &dev, &dev_num);
 	CreateSessionServerInterface("SessionTest1");
 	char op;
+	int32_t selectId = 0;
+	char input[128];
 	while (true) {
-		DisplayDevList();
+		DisplayTitle();
+		PrintTitle("");
+		PrintTitle("");
+		PrintMessage("Press key:");
+		PrintMessage("[U]Up    [D]Down    [S]Select");
+		PrintTitle("");
+		for (int32_t i = 0; i < dev_num; ++i) {
+			strcpy(input, i == selectId ? "*" : " ");
+			strcat(input, dev->networkId);
+			PrintMessage(input);
+		}
+		PrintTitle("");
+		PrintMargin();
+		// to do
 		op = getch();
+		if (op == 'U' || op == 'u') {
+			--selectId;
+			if (selectId < 0) {
+				selectId = dev_num - 1;
+			}
+		} else if (op == 'D' || op == 'd') {
+			++selectId;
+			if (selectId == dev_num) {
+				selectId = 0;
+			}
+		} else if (op == 'S' || op == 's') {
+			break;
+		}
 	}
-	OpenSession("SessionTest1", "SessionTest2", peerId)
+	size_t inputLen = 0;
+	if (dev_num) {
+		int sessionId = OpenSessionInterface("SessionTest1", "SessionTest2", dev[selectId].networkId);
+		while (sessionId >= 0) {
+			input[inputLen] = '\0';
+			DisplayTitle();
+			PrintTitle("");
+			PrintTitle("");
+			PrintMessage("Press key:");
+			PrintMessage("[]");
+			PrintMessage("Message:");
+			PrintMessage(input);
+			PrintTitle("");
+			PrintMargin();
+			op = getch();
+			if (op == 13) {
+				SendBytes(sessionId, input, strlen(input));
+				inputLen = 0;
+			} else if (op == 8) {
+				if (inputLen) {
+					--inputLen;
+				}
+			} else if (op == 27) {
+				break;
+			}
+		}
+		CloseSession(selectId);
+	}
 }
 
 void ProcessKeyMain()
 {
 	char op = getch();
 	switch(op) {
-	case 'P':
-	case 'p':
-		hasPublish = true;
-		break;
-	case 'U':
-	case 'u':
-		hasPublish = false;
-		break;
 	case 'D':
 	case 'd':
-		hasDiscovery = true;
-		break;
-	case 'S':
-	case 's':
-		hasDiscovery = false;
+		Discovering();
 		break;
 	case 'T':
 	case 't':
-		DataTransmission();
+		SendData();
 	}
 }
 
 int main(int argc, char **argv)
 {
-	pid_t pid = fork();
-	if (pid < 0) {
-		puts("Fork failed");
-	} else if (pid > 0) {
-		initscr();
-		while (true) {
-			DisplayMain();
-			ProcessKey();
-		}
-		endwin();
-		/*if (argc > 1) {
-			CreateSessionServerInterface("SessionTest2");
-		} else {
-			
-			
-
-		}*/
-	} else {
-		/*InitSoftBusServer();
-		while (true) {
-			pause();
-		}*/
+	initscr();
+	while (true) {
+		DisplayMain();
+		ProcessKeyMain();
 	}
+	endwin();
 	return 0;
 }
