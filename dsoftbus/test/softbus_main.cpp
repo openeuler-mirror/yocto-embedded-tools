@@ -9,10 +9,13 @@
 #include "dsoftbus/session.h"
 
 std::vector<const DeviceInfo * > devList;
+char receivedData[256];
 
 bool hasPublish = false;
 bool hasDiscovery = false;
 const size_t LINE_WIDTH = 80;
+
+// #define ImReceive
 
 #define clientName "Client"
 
@@ -99,14 +102,28 @@ void DisplayDevList()
 	PrintMargin();
 }
 
+void DisplayReceivedData()
+{
+	DisplayTitle();
+	PrintTitle("");
+	PrintTitle("");
+	PrintMessage("Press key:");
+	PrintMessage("[Esc]Back");
+	PrintMessage("Received data:");
+	PrintMessage(receivedData);
+	PrintTitle("");
+	PrintTitle("");
+	PrintMargin();
+}
+
 void PublishSuccess(int publishId)
 {
-	printf("CB: publish %d done", publishId);
+	// printf("CB: publish %d done", publishId);
 }
 
 void PublishFailed(int publishId, PublishFailReason reason)
 {
-	printf("CB: publish %d failed, reason=%d\n", publishId, (int)reason);
+	// printf("CB: publish %d failed, reason=%d\n", publishId, (int)reason);
 }
 
 void DeviceFound(const DeviceInfo *device)
@@ -117,33 +134,36 @@ void DeviceFound(const DeviceInfo *device)
 
 void DiscoverySuccess(int subscribeId)
 {
-	printf("CB: discover subscribeId=%d\n", subscribeId);
+	// printf("CB: discover subscribeId=%d\n", subscribeId);
 }
 
 void DiscoveryFailed(int subscribeId, DiscoveryFailReason reason)
 {
-	printf("CB: discover subscribeId=%d failed, reason=%d\n", subscribeId, (int)reason);
+	// printf("CB: discover subscribeId=%d failed, reason=%d\n", subscribeId, (int)reason);
 }
 
 int SessionOpened(int sessionId, int result)
 {
-	printf("CB: session %d open ret=%d\n", sessionId, result);
+	// printf("CB: session %d open ret=%d\n", sessionId, result);
 	return 0;
 }
 
 void SessionClosed(int sessionId)
 {
-	printf("CB: session %d closed\n", sessionId);
+	// printf("CB: session %d closed\n", sessionId);
 }
 
 void ByteRecived(int sessionId, const void *data, unsigned int dataLen)
 {
-	printf("CB: session %d received %u bytes data=%s\n", sessionId, dataLen, (const char *)data);
+	memset(ReceiveData, 0, sizeof(ReceiveData));
+	memcpy(ReceiveData, data, dataLen);
+	DisplayReceivedData();
+	// printf("CB: session %d received %u bytes data=%s\n", sessionId, dataLen, (const char *)data);
 }
 
 void MessageReceived(int sessionId, const void *data, unsigned int dataLen)
 {
-	printf("CB: session %d received %u bytes message=%s\n", sessionId, dataLen, (const char *)data);
+	// printf("CB: session %d received %u bytes message=%s\n", sessionId, dataLen, (const char *)data);
 }
 
 unsigned char cData[] = "My Client Test";
@@ -212,6 +232,7 @@ int OpenSessionInterface(const char *SessionName, const char *peerName, const ch
 
 void Discovering()
 {
+	devList.clear();
 	DiscoveryInterface();
 	while (true) {
 		DisplayDevList();
@@ -270,7 +291,7 @@ void SendData()
 			PrintTitle("");
 			PrintTitle("");
 			PrintMessage("Press key:");
-			PrintMessage("[]");
+			PrintMessage("[Enter]Send      [Esc]Back");
 			PrintMessage("Message:");
 			PrintMessage(input);
 			PrintTitle("");
@@ -285,32 +306,52 @@ void SendData()
 				}
 			} else if (op == 27) {
 				break;
+			} else {
+				input[inputLen] = op;
+				++inputLen;
 			}
 		}
 		CloseSession(selectId);
 	}
 }
 
-void ProcessKeyMain()
+void ReceiveData()
 {
-	char op = getch();
-	switch(op) {
-	case 'D':
-	case 'd':
-		Discovering();
-		break;
-	case 'T':
-	case 't':
-		SendData();
+	NodeBasicInfo *dev;
+	int32_t dev_num;
+	GetAllNodeDeviceInfo(clientName, &dev, &dev_num);
+	CreateSessionServerInterface("SessionTest2");
+	while (true) {
+		DisplayReceivedData();
+		char op = getch();
+		if (op == 27) {
+			break;
+		}
 	}
 }
 
 int main(int argc, char **argv)
 {
+	bool needContinue = true;
 	initscr();
-	while (true) {
+	while (needContinue) {
 		DisplayMain();
-		ProcessKeyMain();
+		char op = getch();
+		switch(op) {
+		case 'D':
+		case 'd':
+			Discovering();
+			break;
+		case 'T':
+		case 't':
+#ifdef ImReceive
+			ReceiveData();
+#else
+			SendData();
+#endif
+		case 27:
+			needContinue = false;
+		}
 	}
 	endwin();
 	return 0;
