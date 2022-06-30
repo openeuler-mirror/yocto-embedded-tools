@@ -176,7 +176,7 @@ void rpmsg_app_master(void)
 		return;
 	}
 
-	vdev.role = RPMSG_MASTER;
+	vdev.role = RPMSG_HOST;
 	vdev.vrings_num = VRING_COUNT;
 	vdev.func = &dispatch;
 	rvrings[0].io = io;
