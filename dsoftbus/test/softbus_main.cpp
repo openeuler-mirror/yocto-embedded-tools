@@ -155,8 +155,8 @@ void SessionClosed(int sessionId)
 
 void ByteRecived(int sessionId, const void *data, unsigned int dataLen)
 {
-	memset(ReceiveData, 0, sizeof(ReceiveData));
-	memcpy(ReceiveData, data, dataLen);
+	memset(receivedData, 0, sizeof(receivedData));
+	memcpy(receivedData, data, dataLen);
 	DisplayReceivedData();
 	// printf("CB: session %d received %u bytes data=%s\n", sessionId, dataLen, (const char *)data);
 }
