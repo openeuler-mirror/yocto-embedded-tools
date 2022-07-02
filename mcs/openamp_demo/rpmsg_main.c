@@ -57,7 +57,7 @@ static int load_bin(void)
 }
 
 static struct remoteproc *rproc_init(struct remoteproc *rproc,
-                                    const struct remoteproc_ops *ops, void *arg)
+                                    struct remoteproc_ops *ops, void *arg)
 {
     struct rproc_priv *priv;
     unsigned int id = *((unsigned int *)arg);
