@@ -498,14 +498,12 @@ index 000000000000..56d0a1ecc0bb
 +        adr     x4, start
 +        lsr	x4, x4, #21
 +        lsl	x4, x4, #21
-+#ifdef CONFIG_RTOS_HAL_2M_TEXT_OFFSET
 +	/*
 +	 * Add 2M offset to start address of second kernel.
 +	 * Avoid destroying dtb of some boards after getting
 +	 * rid of TEXT_OFFSET on kernel 5.8.
 +	 */
 +	add	x4, x4, #0x200000
-+#endif
 +	mov	x25, x4
 +restart:
 +        adr	x0, LC0
