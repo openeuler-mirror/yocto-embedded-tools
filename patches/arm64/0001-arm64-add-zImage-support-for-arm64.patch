@@ -15,7 +15,7 @@ Signed-off-by: songzhezhe <songzhezhe@huawei.com>
  arch/arm64/boot/compressed/Kconfig       |  48 ++
  arch/arm64/boot/compressed/Makefile      | 121 +++++
  arch/arm64/boot/compressed/decompress.c  |  55 +++
- arch/arm64/boot/compressed/head.S        | 817 +++++++++++++++++++++++++++++++
+ arch/arm64/boot/compressed/head.S        | 815 +++++++++++++++++++++++++++++++
  arch/arm64/boot/compressed/hyp-stub.S    |  91 ++++
  arch/arm64/boot/compressed/image.h       |  69 +++
  arch/arm64/boot/compressed/misc.c        |  49 ++
@@ -358,10 +358,10 @@ index 000000000000..1d479ca02697
 +}
 diff --git a/arch/arm64/boot/compressed/head.S b/arch/arm64/boot/compressed/head.S
 new file mode 100644
-index 000000000000..56d0a1ecc0bb
+index 000000000..b527c0237
 --- /dev/null
 +++ b/arch/arm64/boot/compressed/head.S
-@@ -0,0 +1,817 @@
+@@ -0,0 +1,815 @@
 +/*
 + *  linux/arch/arm/boot/compressed/head.S
 + *
