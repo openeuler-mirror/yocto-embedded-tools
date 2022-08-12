@@ -236,7 +236,7 @@ index 2468ca8..f3adcb7 100644
 -}
 \ No newline at end of file
 +} else {
-+  musl_sysroot = "//toolchain/sysroot/"
++  musl_sysroot = ""
 +}
 diff --git a/core/gn/BUILD.gn b/core/gn/BUILD.gn
 index 38d3cc9..cde44b1 100755
