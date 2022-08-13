@@ -1,14 +1,14 @@
-From 4074988c3dcb2b06eac14bf4b89f44e5eb20eff9 Mon Sep 17 00:00:00 2001
-From: fanglinxu <fanglinxu@huawei.com>
-Date: Thu, 17 Mar 2022 21:33:39 +0800
+From a7244bd742f999e7ec8462797c7e7a393a844a7b Mon Sep 17 00:00:00 2001
+From: hmilylmk <liumingkai@huawei.com>
+Date: Sat, 13 Aug 2022 08:21:36 +0800
 Subject: [PATCH] add dsoftbus build support for embedded env
 
-Signed-off-by: fanglinxu <fanglinxu@huawei.com>
+Signed-off-by: hmilylmk <liumingkai@huawei.com>
 ---
  build_scripts/build.sh              |  9 ++++----
  config/BUILDCONFIG.gn               | 11 ++++-----
  config/compiler/compiler.gni        |  6 +----
- config/ohos/BUILD.gn                | 32 ++------------------------
+ config/ohos/BUILD.gn                | 32 +-------------------------
  config/ohos/abi.gni                 |  5 -----
  config/ohos/config.gni              |  4 ++--
  config/ohos/musl.gni                |  4 +++-
@@ -17,7 +17,7 @@ Signed-off-by: fanglinxu <fanglinxu@huawei.com>
  ohos.gni                            |  7 ------
  subsystem_config.json               |  6 +++++
  toolchain/linux/BUILD.gn            |  8 +++++--
- 12 files changed, 32 insertions(+), 99 deletions(-)
+ 12 files changed, 31 insertions(+), 100 deletions(-)
 
 diff --git a/build_scripts/build.sh b/build_scripts/build.sh
 index 3514b36..e2404ca 100755
@@ -122,10 +122,10 @@ index b77100a..ae45cc8 100755
  
  # If it wasn't manually set, set to an appropriate default.
 diff --git a/config/ohos/BUILD.gn b/config/ohos/BUILD.gn
-index aa5ac7c..dbc2a87 100755
+index aa5ac7c..941cc2e 100755
 --- a/config/ohos/BUILD.gn
 +++ b/config/ohos/BUILD.gn
-@@ -24,31 +24,18 @@ config("compiler") {
+@@ -24,31 +24,17 @@ config("compiler") {
      "HAVE_SYS_UIO_H",
    ]
  
@@ -148,7 +148,7 @@ index aa5ac7c..dbc2a87 100755
  
 -  cflags += [ "--target=$abi_target" ]
    include_dirs = [
-     "${musl_sysroot}/usr/include/${abi_target}",
+-    "${musl_sysroot}/usr/include/${abi_target}",
 -    "${clang_base_path}/include/c++/v1",
    ]
  
@@ -157,7 +157,7 @@ index aa5ac7c..dbc2a87 100755
    # Assign any flags set for the C compiler to asmflags so that they are sent
    # to the assembler.
    asmflags = cflags
-@@ -66,13 +53,6 @@ config("runtime_library") {
+@@ -66,13 +52,6 @@ config("runtime_library") {
      "CHROMIUM_CXX_TWEAK_INLINES",  # Saves binary size.
    ]
  
@@ -171,7 +171,7 @@ index aa5ac7c..dbc2a87 100755
    libs = []
  
    # arm builds of libc++ starting in NDK r12 depend on unwind.
-@@ -80,20 +60,12 @@ config("runtime_library") {
+@@ -80,20 +59,11 @@ config("runtime_library") {
      libs += [ "unwind" ]
    }
  
@@ -182,7 +182,6 @@ index aa5ac7c..dbc2a87 100755
 -    "-L" + rebase_path("${clang_base_path}/lib/clang/10.0.1/lib/${abi_target}",
 -                       root_build_dir),
 +  ldflags = [
-+        "-L" + rebase_path("${musl_sysroot}/usr/lib/${abi_target}", root_build_dir),
    ]
 -  ldflags += [ "-Wl,--dynamic-linker,/system/bin/ld-musl-${musl_arch}.so.1" ]
  
@@ -226,7 +225,7 @@ index 072bce1..00c7311 100644
      abi_target = ""
    } else {
 diff --git a/config/ohos/musl.gni b/config/ohos/musl.gni
-index 2468ca8..f3adcb7 100644
+index 2468ca8..f9cead9 100644
 --- a/config/ohos/musl.gni
 +++ b/config/ohos/musl.gni
 @@ -16,4 +16,6 @@ if (use_musl){
@@ -387,5 +386,5 @@ index 1a4c4e9..c811cf9 100755
    toolchain_args = {
      current_cpu = "arm"
 -- 
-2.32.0
+2.34.1
 
