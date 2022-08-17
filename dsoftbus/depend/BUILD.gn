@@ -10,11 +10,20 @@ ohos_shared_library("deviceauth_sdk") {
 }
 
 config("hilog_config") {
-  include_dirs = [ "hilog/include" ]
+  include_dirs = [ 
+    "hilog/include",
+    "//third_party/bounds_checking_function/include",
+  ]
 }
 
 ohos_shared_library("libhilog") {
   public_configs = [ ":hilog_config" ]
+  sources = [
+    "hilog/hilog.c",
+  ]
+  deps = [
+    "//third_party/bounds_checking_function:libsec_shared",
+  ]
 }
 
 config("ipc_config") {
