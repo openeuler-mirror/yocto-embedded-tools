@@ -16,7 +16,7 @@ function do_patch() {
 	else
 		PKG=$(echo *.tar.*)
 		tar xf *.tar.*
-		cat *.spec | grep "Patch" | grep "\.patch" | awk '{print $2}' > $1-patchlist
+		cat *.spec | grep "Patch" | grep "\.patch" | awk -F ":" '{print $2}' > $1-patchlist
 		pushd ${PKG%%.tar.*}
 		for i in `cat ../$1-patchlist`
 		do
@@ -29,7 +29,7 @@ function do_patch() {
 
 function download_and_patch() {
 	while [ $# != 0 ] ; do
-		[ -n "$1" ] && echo "Download $1" && git clone -b $COMMON_BRANCH https://gitee.com/src-openeuler/$1.git && do_patch $1; shift;
+		[ -n "$1" ] && echo "Download $1" && git clone -b $COMMON_BRANCH https://gitee.com/src-openeuler/$1.git --depth 1 && do_patch $1; shift;
 	done
 }
 
@@ -121,6 +121,7 @@ main()
 	echo "Prepare done! Now you can run: (not in root please)"
 	echo "'cp config_arm32 .config && ct-ng build' for build arm"
 	echo "'cp config_aarch64 .config && ct-ng build' for build arm64"
+	echo "'cp config_x86_64 .config && ct-ng build' for build x86_64"
 }
 
 main "$@"

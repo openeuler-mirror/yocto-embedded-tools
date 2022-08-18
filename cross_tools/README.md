@@ -40,7 +40,7 @@ gcc version 10.3.1 (crosstool-NG 1.25.0)
 2.  下载本仓库的代码，并通过脚本一键准备构建所需的代码和配置:
 
 ````
-    cd /usr1 && git clone -b openEuler-22.03-LTS https://gitee.com/openeuler/yocto-embedded-tools.git
+    cd /usr1 && git clone -b master https://gitee.com/openeuler/yocto-embedded-tools.git
     cd yocto-embedded-tools/cross_tools
     ./prepare.sh
 ````
