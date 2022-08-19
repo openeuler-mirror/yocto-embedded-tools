@@ -432,7 +432,7 @@ CT_GLIBC_PKG_NAME="glibc"
 # CT_GLIBC_SRC_RELEASE is not set
 # CT_GLIBC_SRC_DEVEL is not set
 CT_GLIBC_SRC_CUSTOM=y
-CT_GLIBC_CUSTOM_LOCATION="/usr1/yocto-embedded-tools/cross_tools/open_source/glibc/glibc-2.34"
+CT_GLIBC_CUSTOM_LOCATION="/usr1/yocto-embedded-tools/cross_tools/open_source/glibc/glibc-2.35"
 CT_GLIBC_PATCH_GLOBAL=y
 # CT_GLIBC_PATCH_BUNDLED is not set
 # CT_GLIBC_PATCH_LOCAL is not set
@@ -728,7 +728,7 @@ CT_EXPAT_PKG_NAME="expat"
 # CT_EXPAT_SRC_RELEASE is not set
 # CT_EXPAT_SRC_DEVEL is not set
 CT_EXPAT_SRC_CUSTOM=y
-CT_EXPAT_CUSTOM_LOCATION="/usr1/yocto-embedded-tools/cross_tools/open_source/expat/expat-2.4.1"
+CT_EXPAT_CUSTOM_LOCATION="/usr1/yocto-embedded-tools/cross_tools/open_source/expat/expat-2.4.8"
 CT_EXPAT_PATCH_GLOBAL=y
 # CT_EXPAT_PATCH_BUNDLED is not set
 # CT_EXPAT_PATCH_LOCAL is not set
@@ -736,9 +736,9 @@ CT_EXPAT_PATCH_GLOBAL=y
 # CT_EXPAT_PATCH_LOCAL_BUNDLED is not set
 # CT_EXPAT_PATCH_NONE is not set
 CT_EXPAT_PATCH_ORDER="global"
-# CT_EXPAT_VERY_NEW is not set
-CT_EXPAT_V_2_4=y
-CT_EXPAT_VERSION="2.4.1"
+CT_EXPAT_VERY_NEW=y
+# CT_EXPAT_V_2_4 is not set
+CT_EXPAT_VERSION="new"
 CT_EXPAT_MIRRORS="http://downloads.sourceforge.net/project/expat/expat/${CT_EXPAT_VERSION} https://github.com/libexpat/libexpat/releases/download/R_${CT_EXPAT_VERSION//./_}"
 CT_EXPAT_ARCHIVE_FILENAME="@{pkg_name}-@{version}"
 CT_EXPAT_ARCHIVE_DIRNAME="@{pkg_name}-@{version}"

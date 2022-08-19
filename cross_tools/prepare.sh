@@ -15,16 +15,30 @@ function do_patch() {
 		tar xf *.tar.*
 	else
 		PKG=$(echo *.tar.*)
+        echo "$1: do_unpack for of $PKG..."
 		tar xf *.tar.*
-		cat *.spec | grep "Patch" | grep "\.patch" | awk -F ":" '{print $2}' > $1-patchlist
+        echo "make patchlist of $1..."
+		cat *.spec | grep "Patch" | grep -v "#" |grep "\.patch" | awk -F ":" '{print $2}' > $1-patchlist
+	    if [ $1 = "gcc" ];then
+            # current patches can't apply, it cause --sysroot bugs
+            sed -i '/0041-Backport-Register-sysroot-in-the-driver-switches-tab.patch/d' $1-patchlist
+        fi
+        ls ${OE_PATCH_DIR}/ | grep "^$1" > $1-patchlist-oe || true
 		pushd ${PKG%%.tar.*}
 		for i in `cat ../$1-patchlist`
 		do
+            echo "----------------apply patch $i:"
 			patch -p1 < ../$i
+		done
+		for i in `cat ../$1-patchlist-oe`
+		do
+            echo "----------------apply patch ${OE_PATCH_DIR}/$i:"
+			patch -p1 < ${OE_PATCH_DIR}/$i
 		done
 		popd
 	fi
 	popd
+    echo "------------do_patch for $1 done!"
 }
 
 function download_and_patch() {
@@ -111,6 +125,7 @@ main()
 	fi
 	WORK_DIR="$(realpath ${WORK_DIR})"
 	source $SRC_DIR/configs/config.xml
+    OE_PATCH_DIR="$SRC_DIR/patches"
 	readonly LIB_PATH="$WORK_DIR/open_source"
 
 	do_prepare
@@ -121,7 +136,6 @@ main()
 	echo "Prepare done! Now you can run: (not in root please)"
 	echo "'cp config_arm32 .config && ct-ng build' for build arm"
 	echo "'cp config_aarch64 .config && ct-ng build' for build arm64"
-	echo "'cp config_x86_64 .config && ct-ng build' for build x86_64"
 }
 
 main "$@"
