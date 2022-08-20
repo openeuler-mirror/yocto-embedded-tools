@@ -24,6 +24,13 @@
 #define DEV_CLIENT_OS_AGENT        "/dev/cpu_handler"
 
 extern char *cpu_id;
+extern struct metal_io_region *io;
 
-void rpmsg_app_master(void);
+void rpmsg_endpoint_init(void);
+int receive_message(unsigned char *message, int message_len, int *real_len);
+int send_message(unsigned char *message, int len);
+
+void *shell_user(void *arg);
+void *log_user(void *arg);
+
 #endif

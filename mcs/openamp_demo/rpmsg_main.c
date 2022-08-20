@@ -8,7 +8,6 @@
 
 #include "rpmsg-internal.h"
 
-#define MAX_BIN_BUFLEN  (10 * 1024 * 1024)
 #define BOOTCMD_MAXSIZE 100
 
 static struct remoteproc rproc_inst;
@@ -16,48 +15,28 @@ static struct remoteproc_ops ops;
 
 char *cpu_id;
 static char *boot_address;
-static char *target_binfile;
-static char *target_binaddr;
 
 struct rproc_priv {
     struct remoteproc *rproc;
     unsigned int id;
 };
 
-static int load_bin(void)
+static void cleanup(void)
 {
-    int memfd = open("/dev/mem", O_RDWR);
-    int bin_fd = open(target_binfile, O_RDONLY);
-    void *access_address = NULL, *bin_buffer = NULL;
-    long bin_size;
-    long long int bin_addr = strtoll(target_binaddr, NULL, 0);
+    printf("\nOpenAMP demo ended.\n");
+    remoteproc_stop(&rproc_inst);
+    remoteproc_remove(&rproc_inst);
+    if (io)
+        free(io);
+}
 
-    if (bin_fd < 0 || memfd < 0) {
-        printf("invalid bin file fd\n");
-        exit(-1);
-    }
-
-    bin_buffer = (void *)malloc(MAX_BIN_BUFLEN);
-    if (!bin_buffer) {
-        printf("malloc bin_buffer failed\n");
-        exit(-1);
-    }
-
-    bin_size = read(bin_fd, bin_buffer, MAX_BIN_BUFLEN);
-    if (bin_size == 0) {
-        printf("read bin file failed\n");
-        exit(-1);
-    }
-
-    access_address = mmap((void *)bin_addr, MAX_BIN_BUFLEN, PROT_READ | PROT_WRITE,
-                            MAP_SHARED, memfd, bin_addr);
-    memcpy(access_address, bin_buffer, bin_size);
-    free(bin_buffer);
-    return 0;
+static void handler(int sig)
+{
+    exit(0);
 }
 
 static struct remoteproc *rproc_init(struct remoteproc *rproc,
-                                    struct remoteproc_ops *ops, void *arg)
+                                     const struct remoteproc_ops *ops, void *arg)
 {
     struct rproc_priv *priv;
     unsigned int id = *((unsigned int *)arg);
@@ -94,6 +73,16 @@ static int rproc_start(struct remoteproc *rproc)
     return 0;
 }
 
+static int rproc_stop(struct remoteproc *rproc)
+{
+#if 0
+    /* send message to zephyr, zephyr shut itself down by PSCI */
+    int ret = send_message("shutdown\r\n", 10);
+    sleep(3);
+#endif
+    return 0;
+}
+
 static void rproc_remove(struct remoteproc *rproc)
 {
     struct rproc_priv *priv;
@@ -106,6 +95,7 @@ struct remoteproc_ops rproc_ops = {
     .init = rproc_init,
     .remove = rproc_remove,
     .start = rproc_start,
+    .stop = rproc_stop,
 };
 
 static struct remoteproc *platform_create_proc(unsigned int id)
@@ -126,20 +116,21 @@ int main(int argc, char **argv)
     unsigned int id = 1;
     int ret;
     int opt;
+    pthread_t tida, tidb, tidc;
+    void *reta, *retb, *retc;
 
-    while ((opt = getopt(argc, argv, "c:b:t:a:")) != -1) {
+    /* ctrl+c signal, exit program and do cleanup */
+    atexit(cleanup);
+    signal(SIGINT, handler);
+
+    /* using qemu arg: -device loader,file=zephyr.elf,cpu-num=1 */
+    while ((opt = getopt(argc, argv, "c:b:")) != -1) {
         switch (opt) {
         case 'c':
             cpu_id = optarg;
             break;
         case 'b':
             boot_address = optarg;
-            break;
-        case 't':
-            target_binfile = optarg;
-            break;
-        case 'a':
-            target_binaddr = optarg;
             break;
         default:
             break;
@@ -152,12 +143,6 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    ret = load_bin();
-    if (ret) {
-        printf("failed to load client os\n");
-        return ret;
-    }
-
     ret = remoteproc_start(rproc);
     if (ret) {
         printf("start processor failed\n");
@@ -166,8 +151,43 @@ int main(int argc, char **argv)
 
     sleep(5);
     printf("start processing OpenAMP demo...\n");
-    rpmsg_app_master();
+    rpmsg_endpoint_init();
 
-    remoteproc_remove(rproc);
-    return ret;
+    /* Multi-thread processing user requests */
+    printf("Multi-thread processing user requests...\n");
+
+    /* userA: user shell, open with screen */
+    if (pthread_create(&tida, NULL, shell_user, NULL) < 0) {
+        perror("userA pthread_create");
+        return -1;
+    }
+#if 0
+    /* userB: dual user shell, open with screen */
+    if (pthread_create(&tidb, NULL, shell_user, NULL) < 0) {
+        perror("userB pthread_create");
+        return -1;
+    }
+#endif
+    /* userC: zephyr log */
+    if (pthread_create(&tidc, NULL, log_user, NULL) < 0) {
+        perror("userC pthread_create");
+        return -1;
+    }
+
+    pthread_join(tida, &reta);
+    if ((long)reta) {
+        printf("userA return failed: %ld", (long)reta);
+    }
+#if 0
+    pthread_join(tidb, &retb);
+    if ((long)retb) {
+        printf("userB return failed: %ld", (long)retb);
+    }
+#endif
+    pthread_join(tidc, &retc);
+    if ((long)retc) {
+        printf("userC return failed: %ld", (long)retc);
+    }
+
+    return 0;
 }
