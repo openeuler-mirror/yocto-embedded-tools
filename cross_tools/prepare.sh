@@ -60,9 +60,9 @@ function do_prepare() {
 }
 
 function update_feature() {
-	# Change GLIBC_DYNAMIC_LINKER to use lib64/xxx.ld for arm64 and riscv64
+	# Change GLIBC_DYNAMIC_LINKER to use lib64/xxx.ld for arm64 and lib64/lp64d/xxx.ld for riscv64
 	sed -i "s#^\#define GLIBC_DYNAMIC_LINKER.*#\#undef STANDARD_STARTFILE_PREFIX_2\n\#define STANDARD_STARTFILE_PREFIX_2 \"/usr/lib64/\"\n\#define GLIBC_DYNAMIC_LINKER \"/lib%{mabi=lp64:64}%{mabi=ilp32:ilp32}/ld-linux-aarch64%{mbig-endian:_be}%{mabi=ilp32:_ilp32}.so.1\"#g" $LIB_PATH/$GCC/$GCC_DIR/gcc/config/aarch64/aarch64-linux.h
-	sed -i "s#^\#define GLIBC_DYNAMIC_LINKER.*#\#define GLIBC_DYNAMIC_LINKER \"/lib64/ld-linux-riscv\" XLEN_SPEC \"-\" ABI_SPEC \".so.1\"#g" $LIB_PATH/$GCC/$GCC_DIR/gcc/config/riscv/linux.h
+	sed -i "s#^\#define GLIBC_DYNAMIC_LINKER.*#\#define GLIBC_DYNAMIC_LINKER \"/lib64/lp64d/ld-linux-riscv\" XLEN_SPEC \"-\" ABI_SPEC \".so.1\"#g" $LIB_PATH/$GCC/$GCC_DIR/gcc/config/riscv/linux.h
 
 	# Change libstdc++.so option
 	sed -i "s#^\\t\$(OPT_LDFLAGS).*#\\t\$(OPT_LDFLAGS) \$(SECTION_LDFLAGS) \$(AM_CXXFLAGS)  \$(LTLDFLAGS) -Wl,-z,relro,-z,now,-z,noexecstack -Wtrampolines -o \$\@#g" $LIB_PATH/$GCC/$GCC_DIR/libstdc++-v3/src/Makefile.in
@@ -136,6 +136,8 @@ main()
 	echo "Prepare done! Now you can run: (not in root please)"
 	echo "'cp config_arm32 .config && ct-ng build' for build arm"
 	echo "'cp config_aarch64 .config && ct-ng build' for build arm64"
+	echo "'cp config_x86_64 .config && ct-ng build' for build x86_64"
+	echo "'cp config_riscv64 .config && ct-ng build' for build riscv64"
 }
 
 main "$@"

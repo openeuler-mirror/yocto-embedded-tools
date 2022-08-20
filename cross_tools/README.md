@@ -54,6 +54,10 @@ gcc version 10.3.1 (crosstool-NG 1.25.0)
     cp config_aarch64 .config && ct-ng build
     #arm32
     cp config_arm32 .config && ct-ng build
+    #x86_64
+	cp config_x86_64 .config && ct-ng build
+    #riscv64
+	cp config_riscv64 .config && ct-ng build
 ````
 
 5.  等待构建完成后，在对应工作目录的./build中有构建中间件，在/home/openeuler/x-tools/下有构建的输出件
