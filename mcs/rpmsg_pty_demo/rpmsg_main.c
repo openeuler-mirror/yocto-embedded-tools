@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include "remoteproc_module.h"
 #include "virtio_module.h"
+#include "rpmsg_pty.h"
 
 #define MAX_BIN_BUFLEN  (10 * 1024 * 1024)
 
@@ -48,29 +49,42 @@ static int load_bin(void)
 
 int rpmsg_app_master(void)
 {
-    int ret;
-    unsigned int message = 0;
-    int len;
+    pthread_t tida, tidb, tidc;
+    void *reta, *retb, *retc;
 
-    printf("start processing OpenAMP demo...\n");
+    printf("Multi-thread processing user requests...\n");
 
-    while (message < 99) {
-        ret = send_message((unsigned char*)&message, sizeof(message));
-        if (ret < 0) {
-            printf("send_message(%u) failed with status %d\n", message, ret);
-            return ret;
-        }
+    /* userA: user shell, open with screen */
+    if (pthread_create(&tida, NULL, shell_user, NULL) < 0) {
+        perror("userA pthread_create");
+        return -1;
+    }
+#if 0
+    /* userB: dual user shell, open with screen */
+    if (pthread_create(&tidb, NULL, shell_user, NULL) < 0) {
+        perror("userB pthread_create");
+        return -1;
+    }
+#endif
+    /* userC: zephyr log */
+    if (pthread_create(&tidc, NULL, log_user, NULL) < 0) {
+        perror("userC pthread_create");
+        return -1;
+    }
 
-        sleep(1);
-        ret = receive_message((unsigned char*)&message, sizeof(message), &len);
-        if (ret < 0) {
-            printf("receive_message failed with status %d\n", ret);
-            return ret;
-        }
-        printf("Master core received a message: %u\n", message);
-
-        message++;
-        sleep(1);
+    pthread_join(tida, &reta);
+    if ((long)reta) {
+        printf("userA return failed: %ld", (long)reta);
+    }
+#if 0
+    pthread_join(tidb, &retb);
+    if ((long)retb) {
+        printf("userB return failed: %ld", (long)retb);
+    }
+#endif
+    pthread_join(tidc, &retc);
+    if ((long)retc) {
+        printf("userC return failed: %ld", (long)retc);
     }
 
     return 0;

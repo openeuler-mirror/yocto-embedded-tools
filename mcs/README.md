@@ -42,7 +42,8 @@ OpenAMP包括如下三大重要组件：
 3.  编译用户态程序rpmsg_main，编译方式如下:
 
 ````
-    cd openamp_demo
+    cmake -S . -B build -DDEMO_TARGET=openamp_demo
+    cd build
     make
 ````
 

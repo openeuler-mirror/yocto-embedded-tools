@@ -5,8 +5,7 @@
 #include <sys/ioctl.h>
 #include <openamp/open_amp.h>
 #include <metal/device.h>
-
-#include "rpmsg-internal.h"
+#include "virtio_module.h"
 
 static struct virtio_vring_info rvrings[2] = {
 	[0] = {
@@ -18,11 +17,12 @@ static struct virtio_vring_info rvrings[2] = {
 };
 
 static int g_memfd;
-volatile unsigned int received_data;
+static unsigned char received_data[2048] = {0};
+static unsigned int received_len = 0;
 static struct virtio_device vdev;
 static struct rpmsg_virtio_device rvdev;
 struct metal_io_region *io;
-struct virtqueue *vq[2];
+static struct virtqueue *vq[2];
 static void *tx_addr, *rx_addr, *shm_start_addr;
 static metal_phys_addr_t shm_physmap[] = { SHM_START_ADDR };
 
@@ -75,7 +75,9 @@ struct virtio_dispatch dispatch = {
 int endpoint_cb(struct rpmsg_endpoint *ept, void *data,
 		size_t len, uint32_t src, void *priv)
 {
-	received_data = *((unsigned int *) data);
+	memcpy(received_data + received_len, data, len);
+	received_len += len;
+
 	return RPMSG_SUCCESS;
 }
 
@@ -96,11 +98,74 @@ void ns_bind_cb(struct rpmsg_device *rdev, const char *name, uint32_t dest)
 			rpmsg_service_unbind);
 }
 
+/* message standard receive interface */
+int receive_message(unsigned char *message, int message_len, int *real_len)
+{
+	int ret;
+	int cpu_handler_fd;
+	struct pollfd fds;
+
+	cpu_handler_fd = open(DEV_CLIENT_OS_AGENT, O_RDWR);
+	if (cpu_handler_fd < 0) {
+		printf("receive_message: open %s failed.\n", DEV_CLIENT_OS_AGENT);
+		return cpu_handler_fd;
+	}
+
+	fds.fd = cpu_handler_fd;
+	fds.events = POLLIN;
+
+	/* clear the receive buffer */
+	memset(received_data, 0, sizeof(received_data));
+	received_len = 0;
+
+	while (1) {
+		ret = poll(&fds, 1, 100); /* 100ms timeout */
+		if (ret < 0) {
+			printf("receive_message: poll failed.\n");
+			*real_len = 0;
+			goto _cleanup;
+		}
+
+		if (ret == 0) {
+			break;
+		}
+
+		if (fds.revents & POLLIN) {
+			virtqueue_notification(vq[0]);  /* will call endpoint_cb */
+		}
+	}
+
+	if (received_len > message_len) {
+		printf("receive_message: buffer is too small.\n");
+		*real_len = 0;
+		ret = -1;
+		goto _cleanup;
+	}
+
+	memset(message, 0, message_len);
+	memcpy(message, received_data, received_len);
+	*real_len = received_len;
+
+_cleanup:
+	close(cpu_handler_fd);
+	return ret;
+}
+
+/* message standard send interface */
+int send_message(unsigned char *message, int len)
+{
+	return rpmsg_send(ep, message, len);
+}
+
 static struct rpmsg_virtio_shm_pool shpool;
 
-void rpmsg_endpoint_init(void)
+void virtio_init(void)
 {
 	int status = 0;
+	char message[100] = {0};
+	int len;
+
+    printf("Initialize the virtio, virtqueue, return rpmsg device...\n");
 
 	g_memfd = open("/dev/mem", O_RDWR);
 	tx_addr = mmap((void *)VRING_TX_ADDRESS, VDEV_STATUS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, g_memfd, VRING_TX_ADDRESS);
@@ -128,7 +193,7 @@ void rpmsg_endpoint_init(void)
 		return;
 	}
 
-	vdev.role = RPMSG_MASTER;
+	vdev.role = RPMSG_HOST;
 	vdev.vrings_num = VRING_COUNT;
 	vdev.func = &dispatch;
 	rvrings[0].io = io;
@@ -153,68 +218,9 @@ void rpmsg_endpoint_init(void)
 		free(io);
 		return;
 	}
-}
 
-int rpmsg_endpoint_app(int fds, int ns_setup)
-{
-	int cpu_handler_fd;
-	struct pollfd poll_fd[2] = {0};
-
-	cpu_handler_fd = open(DEV_CLIENT_OS_AGENT, O_RDWR);
-	if (cpu_handler_fd < 0) {
-	    printf("open %s failed.\n", DEV_CLIENT_OS_AGENT);
-	    return -1;
-	}
-
-	poll_fd[0].fd = fds;
-	poll_fd[0].events = POLLIN;
-	poll_fd[1].fd = cpu_handler_fd;
-	poll_fd[1].events = POLLIN;
-
-	/* Wait for data from slave side of PTY, and data from endpoint of openamp, blocked */
-	if (poll(poll_fd, 2, -1) == -1) {
-	    printf("Error %d on poll()\n", errno);
-	    goto err;
-	}
-
-	close(cpu_handler_fd);
-
-	/* If data on slave side of PTY */
-	if (poll_fd[0].revents & POLLIN) {
-	    char recv_buf[200] = {0};
-	    unsigned int number;
-
-	    poll_fd[0].revents = 0;
-	    if (read(fds, recv_buf, sizeof(recv_buf)) > 0) {
-	        number = atoi(recv_buf);
-	        //printf("Master core sending messages: %d\n", number);
-	        rpmsg_send(ep, &number, sizeof(number));
-	    }
-	}
-
-	/* If data on endpoint of openamp */
-	if (poll_fd[1].revents & POLLIN) {
-	    char send_buf[200] = {0};
-	    int wc;
-
-	    poll_fd[1].revents = 0;
-	    virtqueue_notification(vq[0]);
-	    //printf("Master core receiving messages: %d\n", received_data);
-
-	    /* Check whether poll event is ns setup */
-	    if (ns_setup == 1)
-	    	return 0;
-
-	    received_data++;
-	    wc = snprintf(send_buf, sizeof(send_buf), "Output number: %d\n", received_data);
-	    if (write(fds, send_buf, wc) == -1) {
-	        printf("Error %d on rpmsg_endpoint_app write()\n", errno);
-	        goto err;
-	    }
-	}
-
-	return 0;
-err:
-    close(cpu_handler_fd);
-    return -1;
+	/* Since we are using name service, we need to wait for a response
+	 * from NS setup and than we need to process it
+	 */
+	(void)receive_message(message, sizeof(message), &len);
 }

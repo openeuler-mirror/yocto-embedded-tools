@@ -1,9 +1,5 @@
-#ifndef RPMSG_INTERNAL_H_
-#define RPMSG_INTERNAL_H_
-
-#include <openamp/virtio.h>
-#include <openamp/rpmsg.h>
-#include <openamp/rpmsg_virtio.h>
+#ifndef VIRTIO_MODULE_H
+#define VIRTIO_MODULE_H
 
 #define VDEV_START_ADDR            0x70000000
 #define VDEV_SIZE                  0x30000
@@ -23,21 +19,12 @@
 #define IRQ_SENDTO_CLIENTOS        _IOW('A', 0, int)
 #define DEV_CLIENT_OS_AGENT        "/dev/cpu_handler"
 
+void virtio_init(void);
+
+int receive_message(unsigned char *message, int message_len, int *real_len);
+int send_message(unsigned char *message, int len);
+
 extern char *cpu_id;
 extern struct metal_io_region *io;
-
-struct thread_args {
-    int fd;
-    int *pipefd;
-};
-
-struct remoteproc *platform_create_proc(unsigned int id);
-int load_bin(void);
-void rpmsg_endpoint_init(void);
-int rpmsg_endpoint_app(int fds, int ns_setup);
-
-void open_pty(int *pfdm, int *pfds);
-void *master(void *arg_list);
-void *slave(void *arg_list);
 
 #endif
