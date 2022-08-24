@@ -18,7 +18,7 @@ static int32_t ProcessData(int64_t authReqId, const uint8_t *data, uint32_t data
 }
 
 
-static int32_t AuthDevice(int64_t authReqId, const char *authParams,
+static int32_t AuthDevice(int32_t OsAccountId, int64_t authReqId, const char *authParams,
 		const DeviceAuthCallback *callback)
 {
 	callback->onTransmit(authReqId, (const uint8_t *)AUTH_START, strlen(AUTH_START));
