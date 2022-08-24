@@ -1,6 +1,9 @@
 #ifndef VIRTIO_MODULE_H
 #define VIRTIO_MODULE_H
 
+#include <metal/io.h>
+#include <openamp/rpmsg_virtio.h>
+
 #define VDEV_START_ADDR            0x70000000
 #define VDEV_SIZE                  0x30000
 
@@ -21,10 +24,8 @@
 
 void virtio_init(void);
 
-int receive_message(unsigned char *message, int message_len, int *real_len);
-int send_message(unsigned char *message, int len);
-
 extern char *cpu_id;
 extern struct metal_io_region *io;
+extern struct virtqueue *vq[2];
 
 #endif

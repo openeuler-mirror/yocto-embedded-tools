@@ -13,45 +13,32 @@ set(SHARED_LINK_LIBS
 	$ENV{SDKTARGETSYSROOT}/lib64/libsysfs.so
 )
 
-add_library(remoteproc STATIC
+add_library(openamp STATIC
+	./modules/openamp_module.c
 	./modules/remoteproc_module.c
-)
-target_link_libraries(remoteproc
-	${SHARED_LINK_LIBS}
-)
-
-add_library(virtio STATIC
 	./modules/virtio_module.c
+	./modules/rpmsg_module.c
 )
-target_link_libraries(virtio
+target_link_libraries(openamp
 	${SHARED_LINK_LIBS}
 )
 
-add_library(pty STATIC
-	./modules/rpmsg_pty.c
-)
-
-set(INC_PATH
-	$ENV{SDKTARGETSYSROOT}/usr/include
-	./modules
+set(SRC_FILE
+	./${DEMO_TARGET}/rpmsg_main.c
 )
 
 if(DEMO_TARGET MATCHES "openamp_demo")
-	list(APPEND INC_PATH "./openamp_demo")
-	list(APPEND SRC_FILE "./openamp_demo/rpmsg_main.c")
-	list(APPEND STATIC_LINK_LIBS "remoteproc;virtio")
 elseif(DEMO_TARGET MATCHES "rpmsg_pty_demo")
-	list(APPEND INC_PATH "./rpmsg_pty_demo")
-	list(APPEND SRC_FILE "./rpmsg_pty_demo/rpmsg_main.c")
-	list(APPEND STATIC_LINK_LIBS "remoteproc;virtio;pty")
+	list(APPEND SRC_FILE "./${DEMO_TARGET}/rpmsg_pty.c")
 else()
 	message(FATAL_ERROR "DEMO_TARGET: choose a target to build.
-		[openamp_demo|rpmsg_pty_demo]")   #rsc_table_demo|cyclitest_demo|rpmsg_service_demo
+		[openamp_demo|rpmsg_pty_demo]")   #rsc_table_demo|cyclitest_demo|rpmsg_service_demo|gdb_demo
 endif()
 
-include_directories(${INC_PATH})
-add_executable(rpmsg_main ${SRC_FILE})
-target_link_libraries(rpmsg_main
-	${SHARED_LINK_LIBS}
-	${STATIC_LINK_LIBS}
+include_directories(
+	$ENV{SDKTARGETSYSROOT}/usr/include
+	./modules
+	./${DEMO_TARGET}
 )
+add_executable(rpmsg_main ${SRC_FILE})
+target_link_libraries(rpmsg_main openamp)

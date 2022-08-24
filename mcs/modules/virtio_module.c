@@ -1,10 +1,8 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <fcntl.h>
 #include <string.h>
-#include <poll.h>
 #include <sys/ioctl.h>
-#include <openamp/open_amp.h>
-#include <metal/device.h>
+#include "rpmsg_module.h"
 #include "virtio_module.h"
 
 static struct virtio_vring_info rvrings[2] = {
@@ -17,12 +15,10 @@ static struct virtio_vring_info rvrings[2] = {
 };
 
 static int g_memfd;
-static unsigned char received_data[2048] = {0};
-static unsigned int received_len = 0;
 static struct virtio_device vdev;
 static struct rpmsg_virtio_device rvdev;
 struct metal_io_region *io;
-static struct virtqueue *vq[2];
+struct virtqueue *vq[2];
 static void *tx_addr, *rx_addr, *shm_start_addr;
 static metal_phys_addr_t shm_physmap[] = { SHM_START_ADDR };
 
@@ -72,100 +68,13 @@ struct virtio_dispatch dispatch = {
 	.notify = virtio_notify,
 };
 
-int endpoint_cb(struct rpmsg_endpoint *ept, void *data,
-		size_t len, uint32_t src, void *priv)
-{
-	memcpy(received_data + received_len, data, len);
-	received_len += len;
-
-	return RPMSG_SUCCESS;
-}
-
-struct rpmsg_endpoint my_ept;
-struct rpmsg_endpoint *ep = &my_ept;
-
-static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
-{
-	(void)ept;
-	rpmsg_destroy_ept(ep);
-}
-
-void ns_bind_cb(struct rpmsg_device *rdev, const char *name, uint32_t dest)
-{
-	(void)rpmsg_create_ept(ep, rdev, name,
-			RPMSG_ADDR_ANY, dest,
-			endpoint_cb,
-			rpmsg_service_unbind);
-}
-
-/* message standard receive interface */
-int receive_message(unsigned char *message, int message_len, int *real_len)
-{
-	int ret;
-	int cpu_handler_fd;
-	struct pollfd fds;
-
-	cpu_handler_fd = open(DEV_CLIENT_OS_AGENT, O_RDWR);
-	if (cpu_handler_fd < 0) {
-		printf("receive_message: open %s failed.\n", DEV_CLIENT_OS_AGENT);
-		return cpu_handler_fd;
-	}
-
-	fds.fd = cpu_handler_fd;
-	fds.events = POLLIN;
-
-	/* clear the receive buffer */
-	memset(received_data, 0, sizeof(received_data));
-	received_len = 0;
-
-	while (1) {
-		ret = poll(&fds, 1, 100); /* 100ms timeout */
-		if (ret < 0) {
-			printf("receive_message: poll failed.\n");
-			*real_len = 0;
-			goto _cleanup;
-		}
-
-		if (ret == 0) {
-			break;
-		}
-
-		if (fds.revents & POLLIN) {
-			virtqueue_notification(vq[0]);  /* will call endpoint_cb */
-		}
-	}
-
-	if (received_len > message_len) {
-		printf("receive_message: buffer is too small.\n");
-		*real_len = 0;
-		ret = -1;
-		goto _cleanup;
-	}
-
-	memset(message, 0, message_len);
-	memcpy(message, received_data, received_len);
-	*real_len = received_len;
-
-_cleanup:
-	close(cpu_handler_fd);
-	return ret;
-}
-
-/* message standard send interface */
-int send_message(unsigned char *message, int len)
-{
-	return rpmsg_send(ep, message, len);
-}
-
 static struct rpmsg_virtio_shm_pool shpool;
 
 void virtio_init(void)
 {
 	int status = 0;
-	char message[100] = {0};
-	int len;
 
-    printf("Initialize the virtio, virtqueue, return rpmsg device...\n");
+    printf("\nInitialize the virtio, virtqueue and rpmsg device\n");
 
 	g_memfd = open("/dev/mem", O_RDWR);
 	tx_addr = mmap((void *)VRING_TX_ADDRESS, VDEV_STATUS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, g_memfd, VRING_TX_ADDRESS);
@@ -218,9 +127,4 @@ void virtio_init(void)
 		free(io);
 		return;
 	}
-
-	/* Since we are using name service, we need to wait for a response
-	 * from NS setup and than we need to process it
-	 */
-	(void)receive_message(message, sizeof(message), &len);
 }

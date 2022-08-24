@@ -1,10 +1,18 @@
 #include <stdio.h>
 #include <metal/alloc.h>
 #include <metal/io.h>
-#include <openamp/remoteproc.h>
 #include "remoteproc_module.h"
 
 #define BOOTCMD_MAXSIZE 100
+
+struct rproc_priv {
+    struct remoteproc *rproc;  /* pass a remoteproc instance pointer */
+    unsigned int idx;          /* remoteproc instance idx */
+    unsigned int cpu_id;       /* related arg: cpu id */
+    unsigned int boot_address; /* related arg: boot address(in hex format) */
+};
+
+struct remoteproc rproc_inst;
 
 static struct remoteproc *rproc_init(struct remoteproc *rproc,
                                      const struct remoteproc_ops *ops, void *args)
@@ -68,10 +76,16 @@ const struct remoteproc_ops rproc_ops = {
     .stop = rproc_stop,
 };
 
-/* create remoteproc */
-struct remoteproc *platform_create_proc(struct rproc_priv *args)
+struct remoteproc *create_remoteproc(void)
 {
-    struct remoteproc *rproc = remoteproc_init(args->rproc, &rproc_ops, args);
+    struct remoteproc *rproc;
+    struct rproc_priv args;
+
+    args.rproc = &rproc_inst;
+    args.idx = 1;
+    args.cpu_id = strtol(cpu_id, NULL, 10);
+    args.boot_address = strtol(boot_address, NULL, 16);
+    rproc = remoteproc_init(&rproc_inst, &rproc_ops, &args);
     if (!rproc)
         return NULL;
 

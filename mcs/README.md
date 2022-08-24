@@ -85,3 +85,13 @@ OpenAMP包括如下三大重要组件：
 
 此处定义Client OS起始地址为0x7a000000，启动地址为0x7a000ffc，Client OS镜像路径为/tmp/zephyr.bin。
 
+#### 用户开发
+参考demo实现流程，当前提供了多个API，包含在libopenamp.a中，供用户使用和二次开发，用户无需感知openamp实现细节。
+
+1.  调用openamp_init，初始化remoteproc、virtio、rpmsg。
+
+2.  调用bringup_endpoint，启动endpoint动态配对，Linux端与Client OS建立配对的endpoint，供消息收发使用。
+
+3.  调用receive_message、send_message收发消息。
+
+4.  调用openamp_deinit，释放openamp资源。

@@ -5,12 +5,12 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include "virtio_module.h"
+#include "openamp_module.h"
 
 /* define the keys according to your terminfo */
 #define KEY_CTRL_C      3
 
-void open_pty(int *pfdm, int *pfds)
+void open_pty(int *pfdm, int *pfds, const char *pty_name)
 {
     int ret;
     int fdm, fds;
@@ -30,7 +30,7 @@ void open_pty(int *pfdm, int *pfds)
 
     /* Open the slave side of the PTY */
     fds = open(ptsname(fdm), O_RDWR | O_NOCTTY);
-    printf("open a new terminal, exec zephyr shell: screen %s\n", ptsname(fdm));
+    printf("open a new terminal, zephyr %s: screen %s\n", pty_name, ptsname(fdm));
 
     *pfdm = fdm;
     *pfds = fds;
@@ -43,21 +43,25 @@ void *shell_user(void *arg)
     unsigned char cmd[1];
     unsigned char reply[2048];
     int reply_len;
+    struct rpmsg_endpoint ept_inst;
 
-    /* open PTY, pts binds to terminal, using screen to open pts */
-    open_pty(&fdm, &fds);
+    /* To ensure thread saftety, endpoint instance should be defined in thread */
+    bringup_endpoint(&ept_inst);
+
+    open_pty(&fdm, &fds, "shell");
 
     while (1) {
-        memset(cmd, 0, 1);
         ret = read(fdm, cmd, 1);   /* get command from ptmx */
         if (ret < 0) {
             printf("shell_user: get from ptmx failed: %d\n", ret);
             return (void*)-1;
         }
 
-        if (cmd[0] == KEY_CTRL_C)  /* special key: ctrl+c */
-            //pthread_exit(NULL);
-            return (void*)0;
+        if (cmd[0] == KEY_CTRL_C) {  /* special key: ctrl+c */
+            close(fds);
+            close(fdm);
+            return (void*)0;  /* exit this thread, the same as pthread_exit */
+        }
 
         ret = send_message(cmd, 1);  /* send command to rtos */
         if (ret < 0) {
@@ -81,6 +85,37 @@ void *shell_user(void *arg)
     return (void*)0;
 }
 
+void *console_user(void *arg)
+{
+    int ret;
+    int fdm, fds;
+    unsigned char reply[2048];
+    int reply_len;
+    struct rpmsg_endpoint ept_inst;
+
+    /* To ensure thread saftety, endpoint instance should be defined in thread */
+    bringup_endpoint(&ept_inst);
+
+    /* open PTY, pts binds to terminal, using screen to open pts */
+    open_pty(&fdm, &fds, "console");
+
+    while (1) {
+        ret = receive_message(reply, sizeof(reply), &reply_len);   /* receive reply from rtos */
+        if (ret < 0) {
+            printf("shell_user: receive_message failed: %d\n", ret);
+            return (void*)-1;
+        }
+
+        ret = write(fdm, reply, reply_len);  /* send reply to ptmx */
+        if (ret < 0) {
+            printf("shell_user: write to ptmx(%s) failed: %d\n", reply, ret);
+            return (void*)-1;
+        }
+    }
+
+    return (void*)0;
+}
+
 void *log_user(void *arg)
 {
     int ret;
@@ -88,6 +123,10 @@ void *log_user(void *arg)
     unsigned char log[2048] = {0};
     int log_len;
     const char *log_file = "/tmp/zephyr_log.txt";
+    struct rpmsg_endpoint ept_inst;
+
+    /* To ensure thread saftety, endpoint instance should be defined in thread */
+    bringup_endpoint(&ept_inst);
 
     ret = receive_message(log, sizeof(log), &log_len);   /* receive log from rtos */
     if (ret < 0) {
