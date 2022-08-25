@@ -47,7 +47,7 @@ bool MessageParcel::WriteRawData(const void *data, size_t size)
 	if (!WriteInt32(size)) {
 		return false;
 	}
-
+	rawDataSize_ = size;
 	return WriteUnpadBuffer(data, size);
 }
 
@@ -57,6 +57,7 @@ const void *MessageParcel::ReadRawData(size_t size)
 	if (static_cast< unsigned int >(bufferSize) != size) {
 		return nullptr;
 	}
+	rawDataSize_ = size;
 	return ReadUnpadBuffer(size);
 }
 
@@ -68,6 +69,20 @@ sptr< IRemoteObject > MessageParcel::ReadRemoteObject()
 bool MessageParcel::WriteRemoteObject(const sptr< IRemoteObject > &object)
 {
 	return true;
+}
+
+bool MessageParcel::WriteInterfaceToken(std::u16string name) {
+	return WriteString16(name);
+}
+
+std::u16string MessageParcel::ReadInterfaceToken()
+{
+	return ReadString16();
+}
+
+size_t MessageParcel::GetRawDataSize() const
+{
+	return rawDataSize_;
 }
 
 } //namespace OHOS
