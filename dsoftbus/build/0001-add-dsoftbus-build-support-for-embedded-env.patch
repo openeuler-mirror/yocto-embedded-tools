@@ -270,8 +270,8 @@ index 38d3cc9..cde44b1 100755
      deps = [
 -      "$root_build_dir/build_configs:parts_test",
 -      "//test/developertest:make_temp_test",
-+      "//foundation/communication/dsoftbus/core/frame/standard/server:softbus_server_main",
-+      "//foundation/communication/dsoftbus/core/frame/standard/client:softbus_client",
++      "//foundation/communication/dsoftbus/core/frame:softbus_server_main",
++      "//foundation/communication/dsoftbus/sdk:softbus_client",
      ]
    }
 -
