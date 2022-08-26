@@ -10,14 +10,8 @@ char *target_binaddr;
 int rpmsg_app_master(void)
 {
     int ret;
-    unsigned int message = 0;
-    int len;
-    struct rpmsg_endpoint ept_inst;
 
     printf("start processing OpenAMP demo...\n");
-
-    /* To ensure thread saftety, endpoint instance should be a local variable */
-    bringup_endpoint(&ept_inst);
 
     while (message < 99) {
         ret = send_message((unsigned char*)&message, sizeof(message));

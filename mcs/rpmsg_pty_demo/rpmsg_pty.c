@@ -5,10 +5,13 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <pthread.h>
 #include "openamp_module.h"
 
 /* define the keys according to your terminfo */
-#define KEY_CTRL_C      3
+#define KEY_CTRL_D      4
+
+pthread_mutex_t mutex;
 
 void open_pty(int *pfdm, int *pfds, const char *pty_name)
 {
@@ -43,10 +46,6 @@ void *shell_user(void *arg)
     unsigned char cmd[1];
     unsigned char reply[2048];
     int reply_len;
-    struct rpmsg_endpoint ept_inst;
-
-    /* To ensure thread saftety, endpoint instance should be defined in thread */
-    bringup_endpoint(&ept_inst);
 
     open_pty(&fdm, &fds, "shell");
 
@@ -57,21 +56,21 @@ void *shell_user(void *arg)
             return (void*)-1;
         }
 
-        if (cmd[0] == KEY_CTRL_C) {  /* special key: ctrl+c */
+        if (cmd[0] == KEY_CTRL_D) {  /* special key: ctrl+d */
             close(fds);
             close(fdm);
             return (void*)0;  /* exit this thread, the same as pthread_exit */
         }
 
-        ret = send_message(cmd, 1);  /* send command to rtos */
-        if (ret < 0) {
-            printf("shell_user: send_message(%s) failed: %d\n", cmd, ret);
-            return (void*)-1;
-        }
+        pthread_mutex_lock(&mutex);
 
-        ret = receive_message(reply, sizeof(reply), &reply_len);   /* receive reply from rtos */
+        ret = send_message(cmd, 1);  /* send command to rtos */
+        ret |= receive_message(reply, sizeof(reply), &reply_len);   /* receive reply from rtos */
+
+        pthread_mutex_unlock(&mutex);
+
         if (ret < 0) {
-            printf("shell_user: receive_message failed: %d\n", ret);
+            printf("shell_user: send(%s)/receive(%s) message failed: %d\n", cmd, reply, ret);
             return (void*)-1;
         }
 
@@ -91,10 +90,6 @@ void *console_user(void *arg)
     int fdm, fds;
     unsigned char reply[2048];
     int reply_len;
-    struct rpmsg_endpoint ept_inst;
-
-    /* To ensure thread saftety, endpoint instance should be defined in thread */
-    bringup_endpoint(&ept_inst);
 
     /* open PTY, pts binds to terminal, using screen to open pts */
     open_pty(&fdm, &fds, "console");
@@ -123,10 +118,6 @@ void *log_user(void *arg)
     unsigned char log[2048] = {0};
     int log_len;
     const char *log_file = "/tmp/zephyr_log.txt";
-    struct rpmsg_endpoint ept_inst;
-
-    /* To ensure thread saftety, endpoint instance should be defined in thread */
-    bringup_endpoint(&ept_inst);
 
     ret = receive_message(log, sizeof(log), &log_len);   /* receive log from rtos */
     if (ret < 0) {

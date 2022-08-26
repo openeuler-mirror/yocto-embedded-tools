@@ -39,6 +39,8 @@ int openamp_init(void)
 {
     int ret;
     struct remoteproc *rproc;
+    unsigned char message[100];
+    int len;
 
     rproc = create_remoteproc();
     if (!rproc) {
@@ -60,6 +62,8 @@ int openamp_init(void)
 
     sleep(5);  /* wait for zephyr booting */
     virtio_init();
+
+    (void)receive_message(message, sizeof(message), &len);  /* name service: endpoint matching */
 
     return 0;
 }

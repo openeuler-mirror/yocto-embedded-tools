@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <pthread.h>
 #include "rpmsg_pty.h"
 #include "openamp_module.h"
 
@@ -14,12 +15,21 @@ int rpmsg_app_master(void)
 
     printf("Multi-thread processing user requests...\n");
 
-    /* zephyr shell, open with screen */
+    pthread_mutex_init(&mutex, NULL);
+
+    /* userA, zephyr shell, open with screen */
     if (pthread_create(&tida, NULL, shell_user, NULL) < 0) {
         perror("userA pthread_create");
         return -1;
     }
     pthread_detach(tida);
+
+    /* userB, zephyr shell, open with screen */
+    if (pthread_create(&tidb, NULL, shell_user, NULL) < 0) {
+        perror("userB pthread_create");
+        return -1;
+    }
+    pthread_detach(tidb);
 
     while (1);
 

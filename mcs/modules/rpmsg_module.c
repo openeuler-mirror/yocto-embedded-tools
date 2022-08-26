@@ -6,16 +6,7 @@
 
 static unsigned char received_data[2048] = {0};
 static unsigned int received_len = 0;
-struct rpmsg_endpoint *ep;   /* current using endpoint */
-
-void bringup_endpoint(struct rpmsg_endpoint *ept_inst)
-{
-	unsigned char message[100];
-	int len;
-
-    ep = ept_inst;
-    (void)receive_message(message, sizeof(message), &len);  /* name service: endpoint matching */
-}
+struct rpmsg_endpoint ept_inst;
 
 int endpoint_cb(struct rpmsg_endpoint *ept, void *data,
 		size_t len, uint32_t src, void *priv)
@@ -29,12 +20,12 @@ int endpoint_cb(struct rpmsg_endpoint *ept, void *data,
 static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
 {
 	(void)ept;
-	rpmsg_destroy_ept(ep);
+	rpmsg_destroy_ept(&ept_inst);
 }
 
 void ns_bind_cb(struct rpmsg_device *rdev, const char *name, uint32_t dest)
 {
-	(void)rpmsg_create_ept(ep, rdev, name,
+	(void)rpmsg_create_ept(&ept_inst, rdev, name,
 			RPMSG_ADDR_ANY, dest,
 			endpoint_cb,
 			rpmsg_service_unbind);
@@ -94,5 +85,5 @@ _cleanup:
 
 int send_message(unsigned char *message, int len)
 {
-	return rpmsg_send(ep, message, len);
+	return rpmsg_send(&ept_inst, message, len);
 }

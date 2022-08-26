@@ -9,7 +9,16 @@
 extern char *target_binfile;
 extern char *target_binaddr;
 
+/* initialize openamp module, including remoteproc, virtio, rpmsg */
 int openamp_init(void);
+
+/* release openamp resource */
 int openamp_deinit(void);
+
+/* message standard receive interface */
+int receive_message(unsigned char *message, int message_len, int *real_len);
+
+/* message standard send interface */
+int send_message(unsigned char *message, int len);
 
 #endif
