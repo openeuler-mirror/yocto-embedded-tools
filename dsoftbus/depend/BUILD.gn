@@ -1,14 +1,5 @@
 import("//build/ohos.gni")
 
-config("device_auth_config") {
-  include_dirs = [ "device_auth/include" ]
-}
-
-ohos_shared_library("deviceauth_sdk") {
-  sources = [ "device_auth/device_auth.c" ]
-  public_configs = [ ":device_auth_config" ]
-}
-
 config("hilog_config") {
   include_dirs = [ 
     "hilog/include",
@@ -71,4 +62,7 @@ group("want") {
 }
 
 group("appexecfwk_core") {
+}
+
+group("libaccesstoken_sdk") {
 }

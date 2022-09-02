@@ -68,19 +68,7 @@
         }
       ]
     },
-    "deviceauth_standard": {
-      "module_list": [ ],
-      "inner_kits": [
-        {
-          "name": "//depend:deviceauth_sdk",
-          "header": {
-            "header_files": [ ],
-            "header_base": "//depend"
-          }
-        }
-      ]
-    },
-    "permission_standard": {
+   "permission_standard": {
       "module_list": [ ],
       "inner_kits": [
         {
@@ -109,6 +97,30 @@
       "inner_kits": [
         {
           "name": "//depend:samgr_proxy",
+          "header": {
+            "header_files": [ ],
+            "header_base": "//depend"
+          }
+        }
+      ]
+    },
+    "samgr_standard": {
+      "module_list": [ ],
+      "inner_kits": [
+        {
+          "name": "//depend:samgr_proxy",
+          "header": {
+            "header_files": [ ],
+            "header_base": "//depend"
+          }
+        }
+      ]
+    },
+    "access_token": {
+      "module_list": [ ],
+      "inner_kits": [
+        {
+          "name": "//depend:libaccesstoken_sdk",
           "header": {
             "header_files": [ ],
             "header_base": "//depend"
