@@ -601,7 +601,7 @@ CT_CC_GCC_GOLD=y
 CT_CC_GCC_HAS_LIBMPX=y
 CT_CC_GCC_ENABLE_CXX_FLAGS=""
 CT_CC_GCC_CORE_EXTRA_CONFIG_ARRAY=""
-CT_CC_GCC_EXTRA_CONFIG_ARRAY="--with-arch=x86-64 --with-gnu-as --with-gnu-ld --enable-c99 --enable-shared --enable-poison-system-directories --enable-symvers=gnu --disable-bootstrap --disable-libstdcxx-dual-abi --enable-default-pie --libdir=\"${CT_PREFIX_DIR}/lib64\" --with-build-time-tools=\"${CT_PREFIX_DIR}/${CT_TARGET}/bin\""
+CT_CC_GCC_EXTRA_CONFIG_ARRAY="--enable-gnu-indirect-function --with-stage1-ldflags='-Wl,-z,relro,-z,now' --with-boot-ldflags='-Wl,-z,relro,-z,now' --with-tune=generic --with-arch=x86-64 --disable-multilib --with-gnu-as --with-gnu-ld --enable-shared --enable-poison-system-directories --enable-symvers=gnu --disable-bootstrap --enable-default-pie --libdir=\"${CT_PREFIX_DIR}/lib64\" --with-build-time-tools=\"${CT_PREFIX_DIR}/${CT_TARGET}/bin\""
 CT_CC_GCC_STATIC_LIBSTDCXX=y
 # CT_CC_GCC_SYSTEM_ZLIB is not set
 CT_CC_GCC_CONFIG_TLS=m
