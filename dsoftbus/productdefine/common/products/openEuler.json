@@ -7,14 +7,17 @@
     "product_build_path": "device/hisilicon/build",
     "parts": {
         "communication:dsoftbus_standard": {},
+        "security:huks_standard": {},
+        "security:deviceauth_standard": {},
         "depend:hiviewdfx_hilog_native": {},
         "depend:ipc": {},
         "depend:ces_standard": {},
         "depend:aafwk_standard": {},
         "depend:appexecfwk_standard": {},
-        "depend:deviceauth_standard": {},
         "depend:permission_standard": {},
         "depend:safwk": {},
-        "depend:samgr_L2": {}
+        "depend:samgr_L2": {},
+        "depend:samgr_standard": {},
+        "depend:access_token": {}
     }
 }
