@@ -15,6 +15,7 @@ void printfAdapter(const char *fmt, ...);
 #define HILOG_INFO(type, fmt, ...)  printfAdapter(fmt"\n", ##__VA_ARGS__)
 #define HILOG_WARN(type, fmt, ...)  printfAdapter(fmt"\n", ##__VA_ARGS__)
 #define HILOG_ERROR(type, fmt, ...) printfAdapter(fmt"\n", ##__VA_ARGS__)
+#define HiLogPrint(type, level, domain, tag, fmt, ...) printf(fmt"\n", ##__VA_ARGS__)
 
 #ifdef __cplusplus
 #if __cplusplus
