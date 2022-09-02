@@ -1,0 +1,24 @@
+From 7107b08f6af32170e225922f36e315c03959c720 Mon Sep 17 00:00:00 2001
+From: "beiling.xie" <xiekunxun@huawei.com>
+Date: Fri, 2 Sep 2022 22:36:29 +0800
+Subject: [PATCH] support hichian for openeuler
+
+Signed-off-by: beiling.xie <xiekunxun@huawei.com>
+---
+ config/BUILDCONFIG.gn | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/config/BUILDCONFIG.gn b/config/BUILDCONFIG.gn
+index 9e016df..4cc5b41 100755
+--- a/config/BUILDCONFIG.gn
++++ b/config/BUILDCONFIG.gn
+@@ -517,3 +517,6 @@ foreach(_target_type, target_type_list) {
+     }
+   }
+ }
++
++support_jsapi = false
++os_level = "standard"
+-- 
+2.25.1
+
