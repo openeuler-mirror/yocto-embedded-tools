@@ -74,7 +74,7 @@ index 258b206..5db3e4d 100755
          }
 -        if (EVP_PKEY_derive(pctx, derivedKey->data, (size_t *)&derivedKey->size) <= 0) {
 +        size_t new = derivedKey->size;
-+	if (EVP_PKEY_derive(pctx, derivedKey->data, &new)) {
++	if (EVP_PKEY_derive(pctx, derivedKey->data, &new) <= 0) {
              HksLogOpensslError();
              break;
          }
