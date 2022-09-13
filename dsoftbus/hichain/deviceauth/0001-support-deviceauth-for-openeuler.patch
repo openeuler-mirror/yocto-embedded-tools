@@ -1,19 +1,18 @@
-From 6a65c13ee13522f5d3c3a9f298ef35fe0162f9aa Mon Sep 17 00:00:00 2001
-From: "beiling.xie" <xiekunxunn@huawei.com>
-Date: Tue, 19 Jul 2022 12:01:01 +0800
+From 6a4234339518e8be293aacee4aeef6aaa38d7e69 Mon Sep 17 00:00:00 2001
+From: "beiling.xie" <xiekunxun@huawei.com>
+Date: Wed, 14 Sep 2022 00:12:20 +0800
 Subject: [PATCH] support deviceauth for openeuler
 
 Signed-off-by: beiling.xie <xiekunxun@huawei.com>
 ---
  deps_adapter/BUILD.gn                                 |  3 ++-
- deps_adapter/os_adapter/impl/src/linux/hc_dev_info.c  |  7 +++++--
  deps_adapter/os_adapter/interfaces/linux/hc_log.h     |  8 ++++----
  services/BUILD.gn                                     |  2 +-
  .../src/permission_adapter/permission_adapter.cpp     | 11 +++++++----
- 5 files changed, 19 insertions(+), 12 deletions(-)
+ 4 files changed, 14 insertions(+), 10 deletions(-)
 
 diff --git a/deps_adapter/BUILD.gn b/deps_adapter/BUILD.gn
-index 28df2d9..9324baf 100644
+index 28df2d9..906b8ca 100644
 --- a/deps_adapter/BUILD.gn
 +++ b/deps_adapter/BUILD.gn
 @@ -118,10 +118,11 @@ if (defined(ohos_lite)) {
@@ -21,43 +20,14 @@ index 28df2d9..9324baf 100644
      deps = [
        "//base/security/huks/interfaces/innerkits/huks_standard/main:libhukssdk",
 -      "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
-+#      "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
++      "//depend:syspara",
        "//third_party/cJSON:cjson_static",
        "//third_party/openssl:libcrypto_static",
        "//utils/native/base:utils",
-+      "//third_party/bounds_checking_function:libsec_shared"
++      "//third_party/bounds_checking_function:libsec_shared",
      ]
      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
    }
-diff --git a/deps_adapter/os_adapter/impl/src/linux/hc_dev_info.c b/deps_adapter/os_adapter/impl/src/linux/hc_dev_info.c
-index 800b7cf..c16f2f5 100644
---- a/deps_adapter/os_adapter/impl/src/linux/hc_dev_info.c
-+++ b/deps_adapter/os_adapter/impl/src/linux/hc_dev_info.c
-@@ -16,19 +16,22 @@
- #include "hc_dev_info.h"
- #include "hal_error.h"
- #include "hc_log.h"
--#include "parameter.h"
-+//#include "parameter.h"
- #include "securec.h"
- 
- #ifdef __cplusplus
- extern "C" {
- #endif
- 
-+#define DEFAULT_UDID_NAME "ABCDEF00ABCDEF00ABCDEF00ABCDEF00ABCDEF00ABCDEF00ABCDEF00ABCDEF00"
-+
- int32_t HcGetUdid(uint8_t *udid, int32_t udidLen)
- {
-     if (udid == NULL || udidLen < INPUT_UDID_LEN || udidLen > MAX_INPUT_UDID_LEN) {
-         return HAL_ERR_INVALID_PARAM;
-     }
--    int32_t res = GetDevUdid((char *)udid, udidLen);
-+//    int32_t res = GetDevUdid((char *)udid, udidLen);
-+    int32_t res = strncpy_s((char *)udid, udidLen, DEFAULT_UDID_NAME, strlen(DEFAULT_UDID_NAME));
-     if (res != 0) {
-         LOGE("[OS]: GetDevUdid fail! res: %d", res);
-         return HAL_FAILED;
 diff --git a/deps_adapter/os_adapter/interfaces/linux/hc_log.h b/deps_adapter/os_adapter/interfaces/linux/hc_log.h
 index 7cfd649..f881d1e 100644
 --- a/deps_adapter/os_adapter/interfaces/linux/hc_log.h

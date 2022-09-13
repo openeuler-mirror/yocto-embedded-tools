@@ -66,3 +66,23 @@ group("appexecfwk_core") {
 
 group("libaccesstoken_sdk") {
 }
+
+config("syspara_config") {
+  include_dirs = [
+    "syspara/include",
+  ]
+}
+
+ohos_shared_library("syspara") {
+  include_dirs = [
+    "syspara/include",
+  ]
+  sources = [
+    "syspara/syspara.c",
+  ]
+  public_configs = [ ":syspara_config" ]
+  deps = [
+    "//third_party/bounds_checking_function:libsec_shared",
+    "//third_party/mbedtls:mbedtls_shared",
+  ]
+}
