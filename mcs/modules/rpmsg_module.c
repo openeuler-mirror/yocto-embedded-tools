@@ -4,6 +4,8 @@
 #include "virtio_module.h"
 #include "rpmsg_module.h"
 
+#define MCS_DEVICE_NAME "/dev/mcs"
+
 static unsigned char received_data[2048] = {0};
 static unsigned int received_len = 0;
 struct rpmsg_endpoint ept_inst;
@@ -37,9 +39,9 @@ int receive_message(unsigned char *message, int message_len, int *real_len)
 	int cpu_handler_fd;
 	struct pollfd fds;
 
-	cpu_handler_fd = open(DEV_CLIENT_OS_AGENT, O_RDWR);
+	cpu_handler_fd = open(MCS_DEVICE_NAME, O_RDWR);
 	if (cpu_handler_fd < 0) {
-		printf("receive_message: open %s failed.\n", DEV_CLIENT_OS_AGENT);
+		printf("receive_message: open %s device failed.\n", MCS_DEVICE_NAME);
 		return cpu_handler_fd;
 	}
 
@@ -51,6 +53,9 @@ int receive_message(unsigned char *message, int message_len, int *real_len)
 	received_len = 0;
 
 	while (1) {
+#ifdef DEBUG
+		printf("master waiting for message....\n");
+#endif
 		ret = poll(&fds, 1, 100); /* 100ms timeout */
 		if (ret < 0) {
 			printf("receive_message: poll failed.\n");
@@ -59,10 +64,16 @@ int receive_message(unsigned char *message, int message_len, int *real_len)
 		}
 
 		if (ret == 0) {
+#ifdef DEBUG
+			printf("master waiting for message timeout....\n");
+#endif
 			break;
 		}
 
 		if (fds.revents & POLLIN) {
+#ifdef DEBUG
+			printf("master receiving message....\n");
+#endif
 			virtqueue_notification(vq[0]);  /* will call endpoint_cb */
 		}
 	}

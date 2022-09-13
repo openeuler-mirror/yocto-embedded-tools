@@ -3,13 +3,14 @@
 #include "openamp_module.h"
 
 char *cpu_id;
-char *boot_address;
 char *target_binfile;
 char *target_binaddr;
 
 int rpmsg_app_master(void)
 {
     int ret;
+    int message = 0;
+    int len;
 
     printf("start processing OpenAMP demo...\n");
 
@@ -39,13 +40,10 @@ int main(int argc, char **argv)
     int ret;
     int opt;
 
-    while ((opt = getopt(argc, argv, "c:b:t:a:")) != -1) {
+    while ((opt = getopt(argc, argv, "c:t:a:")) != -1) {
         switch (opt) {
         case 'c':
             cpu_id = optarg;
-            break;
-        case 'b':
-            boot_address = optarg;
             break;
         case 't':
             target_binfile = optarg;
@@ -61,20 +59,18 @@ int main(int argc, char **argv)
     ret = openamp_init();
     if (ret) {
         printf("openamp init failed: %d\n", ret);
+        openamp_deinit();
         return ret;
     }
 
     ret = rpmsg_app_master();
     if (ret) {
         printf("rpmsg app master failed: %d\n", ret);
+        openamp_deinit();
         return ret;
     }
 
-    ret = openamp_deinit();
-    if (ret) {
-        printf("openamp deinit failed: %d\n", ret);
-        return ret;
-    }
+    openamp_deinit();
 
     return 0;
 }

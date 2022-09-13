@@ -10,6 +10,7 @@
 
 /* define the keys according to your terminfo */
 #define KEY_CTRL_D      4
+#define FILE_MODE       0644
 
 pthread_mutex_t mutex;
 
@@ -126,7 +127,7 @@ void *log_user(void *arg)
     }
 
     /* write log into file */
-    log_fd = open(log_file, O_RDWR | O_CREAT | O_APPEND, 0644);
+    log_fd = open(log_file, O_RDWR | O_CREAT | O_APPEND, FILE_MODE);
     if (log_fd < 0) {
         printf("log_user: open (%s) failed: %d\n", log_file, log_fd);
         return (void*)-1;

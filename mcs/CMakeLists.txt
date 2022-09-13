@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.19)
 project(openamp_demo)
 
 set(CMAKE_C_COMPILER ${CC})
+set(CMAKE_CXX_COMPILER ${CXX})
 
 message(STATUS "SDKTARGETSYSROOT=$ENV{SDKTARGETSYSROOT}")
 message(STATUS "DEMO_TARGET=${DEMO_TARGET}")

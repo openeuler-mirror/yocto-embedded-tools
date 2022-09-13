@@ -1,37 +1,56 @@
 #include <stdio.h>
 #include "openamp_module.h"
 
-#define MAX_BIN_BUFLEN  (10 * 1024 * 1024)
+#define MCS_DEVICE_NAME    "/dev/mcs"
+#define STR_TO_HEX         16
+#define PAGE_SIZE          4096
+#define PAGE_MASK          (~(PAGE_SIZE - 1))
+#define PAGE_ALIGN(addr)   ((addr & PAGE_MASK) + PAGE_SIZE)
 
-static int load_bin(void)
+static int memfd;
+static void *binaddr;
+static int binsize;
+void *shmaddr;
+
+static int reserved_mem_init(void)
 {
-    int memfd = open("/dev/mem", O_RDWR);
-    int bin_fd = open(target_binfile, O_RDONLY);
-    void *access_address = NULL, *bin_buffer = NULL;
-    long bin_size;
-    long long int bin_addr = strtoll(target_binaddr, NULL, 0);
+    int binfd;
+    struct stat buf;
+    void *file_addr;
 
-    if (bin_fd < 0 || memfd < 0) {
-        printf("invalid bin file fd\n");
-        exit(-1);
+    /* open memfd */
+    memfd = open(MCS_DEVICE_NAME, O_RDWR | O_SYNC);
+    if (memfd < 0) {
+        printf("mcsmem open failed: %d\n", memfd);
+        return -1;
     }
 
-    bin_buffer = (void *)malloc(MAX_BIN_BUFLEN);
-    if (!bin_buffer) {
-        printf("malloc bin_buffer failed\n");
-        exit(-1);
+    /* open clientos bin file */
+    binfd = open(target_binfile, O_RDONLY);
+    if (binfd < 0) {
+        printf("open %s failed, binfd:%d\n", target_binfile, binfd);
+        return -1;
     }
 
-    bin_size = read(bin_fd, bin_buffer, MAX_BIN_BUFLEN);
-    if (bin_size == 0) {
-        printf("read bin file failed\n");
-        exit(-1);
+    /* shared memory for virtio */
+    shmaddr = mmap(NULL, VDEV_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, memfd, VDEV_START_ADDR);
+    memset(shmaddr, 0, VDEV_SIZE);
+
+    /* memory for loading clientos bin file */
+    fstat(binfd, &buf);
+    binsize = PAGE_ALIGN(buf.st_size);
+    binaddr = mmap(NULL, binsize, PROT_READ | PROT_WRITE, MAP_SHARED, memfd, strtol(target_binaddr, NULL, STR_TO_HEX));
+    memset(binaddr, 0, binsize);
+
+    if (shmaddr < 0 || binaddr < 0) {
+        printf("mmap reserved mem failed: shmaddr:%p, binaddr:%p\n", shmaddr, binaddr);
+        return -1;
     }
 
-    access_address = mmap((void *)bin_addr, MAX_BIN_BUFLEN, PROT_READ | PROT_WRITE,
-                            MAP_SHARED, memfd, bin_addr);
-    memcpy(access_address, bin_buffer, bin_size);
-    free(bin_buffer);
+    /* load clientos */
+    file_addr = mmap(NULL, binsize, PROT_READ, MAP_PRIVATE, binfd, 0);
+    memcpy(binaddr, file_addr, binsize);
+
     return 0;
 }
 
@@ -42,16 +61,16 @@ int openamp_init(void)
     unsigned char message[100];
     int len;
 
+    ret = reserved_mem_init();
+    if (ret) {
+        printf("failed to init reserved mem\n");
+        return ret;
+    }
+
     rproc = create_remoteproc();
     if (!rproc) {
         printf("create remoteproc failed\n");
         return -1;
-    }
-
-    ret = load_bin();
-    if (ret) {
-        printf("failed to load client os\n");
-        return ret;
     }
 
     ret = remoteproc_start(rproc);
@@ -60,7 +79,7 @@ int openamp_init(void)
         return ret;
     }
 
-    sleep(5);  /* wait for zephyr booting */
+    sleep(5);  /* wait for clientos booting */
     virtio_init();
 
     (void)receive_message(message, sizeof(message), &len);  /* name service: endpoint matching */
@@ -68,14 +87,17 @@ int openamp_init(void)
     return 0;
 }
 
-int openamp_deinit(void)
+void openamp_deinit(void)
 {
     printf("\nOpenAMP demo ended.\n");
-    if (io)
-        free(io);
-    remoteproc_stop(&rproc_inst); 
-    rproc_inst.state = RPROC_OFFLINE;
-    remoteproc_remove(&rproc_inst);
 
-    return 0;
+    virtio_deinit();
+    destory_remoteproc();
+
+    if (shmaddr)
+        munmap(shmaddr, VDEV_SIZE);
+    if (binaddr)
+        munmap(binaddr, binsize);
+    if (memfd)
+        close(memfd);
 }

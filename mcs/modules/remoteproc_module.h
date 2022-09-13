@@ -3,8 +3,6 @@
 
 #include <openamp/remoteproc.h>
 
-#define DEV_CLIENT_OS_AGENT        "/dev/cpu_handler"
-
 /* create remoteproc */
 struct remoteproc *create_remoteproc(void);
 
@@ -23,8 +21,10 @@ struct remoteproc *create_remoteproc(void);
 	int remoteproc_remove(struct remoteproc *rproc);
 */
 
+/* destory remoteproc */
+void destory_remoteproc(void);
+
 extern char *cpu_id;
-extern char *boot_address;
-extern struct remoteproc rproc_inst;
+extern char *target_binaddr;
 
 #endif

@@ -6,11 +6,15 @@
 
 #### 软件架构
 
-kernel_cpu_handler:  提供OpenAMP所需内核模块，支持Client OS启动、专用中断收发等功能。
+mcs_km:  提供OpenAMP所需内核模块，支持Client OS启动、专用中断收发、管理保留内存等功能。
 
 openamp_demo: 提供OpenAMP用户态程序Linux端样例，支持与指定Client OS进行通信。
 
-zephyr: 提供样例zephyr.bin镜像文件，该文件需要被加载至0x7a000000的起始地址，并在0x7a000ffc的地址进行启动。启动后会运行OpenAMP Client端的样例程序，并与Linux端进行交互。
+rpmsg_pty_demo: 提供OpenAMP用户态程序Linux端样例，支持通过shell命令行访问Client OS。
+
+modules: 提供OpenAMP样例必需的模块remoteproc、virtio、rpmsg、openamp，这些模块静态编译成libopenamp.a。
+
+zephyr: 提供样例镜像文件，在每个demo中，zephyr_qemu.bin运行在qemu上，zephyr_rpi.bin运行在树莓派上，该文件需要被加载至设定的0x7a000000起始地址。启动后会运行OpenAMP Client端的样例程序，并与Linux端进行交互。
 
 #### 原理简介
 
@@ -26,20 +30,20 @@ OpenAMP包括如下三大重要组件：
 
 -remoteproc：该组件用于主机上实现对远程处理器及相关软件环境的生命周期管理、及virtio和rpmsg设备的注册等。
 
-样例Demo通过提供cpu_handler_dev内核KO模块实现Linux内核启动从核的功能，并预留了OpenAMP通信所需的专用中断及其收发机制。用户可在用户态通过dev设备实现Client OS的启动，并通过rpmsg组件实现与Client OS的简单通信。
+样例Demo通过提供mcs_km内核KO模块实现Linux内核启动从核的功能，并预留了OpenAMP通信所需的专用中断及其收发机制。用户可在用户态通过dev设备实现Client OS的启动，并通过rpmsg组件实现与Client OS的简单通信。
 
 #### 安装教程
 
 1.  根据openEuler Embedded使用手册安装SDK并设置SDK环境变量。
 
-2.  编译内核模块cpu_handler_dev.ko，编译方式如下:
+2.  编译内核模块mcs_km.ko，编译方式如下:
 
 ````
-    cd kernel_cpu_handler
+    cd mcs_km
     make
 ````
 
-3.  编译用户态程序rpmsg_main，编译方式如下:
+3.  编译openamp_demo用户态程序rpmsg_main，编译方式如下:
 
 ````
     cmake -S . -B build -DDEMO_TARGET=openamp_demo
@@ -48,14 +52,15 @@ OpenAMP包括如下三大重要组件：
 ````
 
 注意：此处定义OpenAMP通信设备共享内存起始地址为0x70000000，可根据实际内存分配进行修改。
+如果需要查看调试日志，可以给cmake增加-DDEBUG参数。
 
-4.  将编译好的KO模块、用户态程序，以及zephyr.bin镜像拷贝到openEuler Embedded系统的目录下。如何拷贝可以参考使用手册中共享文件系统场景。
+4.  将编译好的KO模块、用户态程序，以及zephyr_qemu.bin镜像拷贝到openEuler Embedded系统的目录下。如何拷贝可以参考使用手册中共享文件系统场景。
 
-5.  将OpenAMP的依赖库libmetal.so*，libopen_amp.so*，libsysfs.so*拷贝至文件系统/lib64目录。对应so可在sdk目录中找到，如何拷贝可以参考使用手册中共享文件系统场景。
+5.  将OpenAMP的依赖库libmetal.so*，libopen_amp.so*拷贝至文件系统/usr/lib64目录，libsysfs.so* 拷贝至文件系统/lib64目录。对应so可在sdk目录中找到，如何拷贝可以参考使用手册中共享文件系统场景。
 
 #### 使用说明
 
-1.  通过QEMU启动openEuler Embedded镜像，如何启动可参考使用手册中QEMU使用与调试章节。
+1.  通过QEMU启动openEuler Embedded镜像，如何启动可参考使用手册中QEMU使用与调试章节。树莓派跳过这一步。
 
 -以上述demo为例，需要预留出地址0x70000000为起始的内存用于OpenAMP demo和Client OS启动。通过QEMU启动时，当指定-m 1G时默认使用0x40000000-0x80000000的系统内存。添加内核启动参数mem=768M，可预留地址为0x70000000-0x80000000的256M内存。
 -在样例中在cpu 3启动Client OS，需要预留出3号cpu。
@@ -64,32 +69,86 @@ OpenAMP包括如下三大重要组件：
 可参考如下命令进行启动：
 
 ````
-    qemu-system-aarch64 -M virt,gic-version=3 -m 1G -cpu cortex-a57 -nographic -kernel zImage -initrd initrd -append 'mem=768M maxcpus=3' -smp 4 
+    qemu-system-aarch64 -M virt,gic-version=3 -m 1G -cpu cortex-a57 -nographic -kernel zImage -initrd *.rootfs.cpio.gz -append 'mem=768M maxcpus=3' -smp 4 
 ````
 
 当使用的QEMU版本过老时可能会由于内存分布不一致导致段错误，可升级QEMU版本或手动修改DTB空出对应内存。
 
-2.  在openEuler Embedded系统上插入内核KO模块cpu_handler_dev.ko。
+2.  在openEuler Embedded系统上插入内核KO模块mcs_km.ko。
 
 ````
-    insmod cpu_handler_dev.ko
+    insmod mcs_km.ko
 ````
 
 3.  运行rpmsg_main程序，使用方式如下:
 
 ````
-    ./rpmsg_main -c [cpu_id] -b [boot_address] -t [target_binfile] -a [target_binaddress]
+    ./rpmsg_main -c [cpu_id] -t [target_binfile] -a [target_binaddress]
     eg:
-    ./rpmsg_main -c 3 -b 0x7a000ffc -t /tmp/zephyr.bin -a 0x7a000000
+    ./rpmsg_main -c 3 -t zephyr_qemu.bin -a 0x7a000000
 ````
 
-此处定义Client OS起始地址为0x7a000000，启动地址为0x7a000ffc，Client OS镜像路径为/tmp/zephyr.bin。
+此处定义Client OS起始地址为0x7a000000，Client OS镜像名为zephyr_qemu.bin，Client OS从3号cpu启动。树莓派换成zephyr_rpi.bin。
 
-#### 用户开发
-参考demo实现流程，当前提供了多个API，包含在libopenamp.a中，供用户使用和二次开发，用户无需感知openamp实现细节。
+#### 用户样例开发
+mcs提供了4个API，供用户做样例开发，用户无需感知OpenAMP实现细节，接口定义在openamp_module.h。
 
-1.  调用openamp_init，初始化remoteproc、virtio、rpmsg，Linux端与Client OS建立配对的endpoint，供消息收发使用。
+1.  openamp_init: 初始化保留内存，加载zephyr镜像文件，初始化remoteproc、virtio、rpmsg，建立Linux与Client OS两端配对的endpoint，供消息收发使用。
+````
+    int openamp_init(void);
+````
 
-2.  调用receive_message、send_message收发消息。
+2.  receive_message: Linux端接收消息。
+````
+    int receive_message(unsigned char *message, int message_len, int *real_len);
+````
+    message: 用户传入的消息接收buffer
+    message_len: 接收buffer的长度
+    real_len: 实际接收到的消息长度
 
-3.  调用openamp_deinit，释放openamp资源。
+3.  send_message: Linux端发送消息。
+````
+    int send_message(unsigned char *message, int len);
+````
+    message: 用户传入的消息发送buffer
+    len: 发送buffer的长度
+
+4.  openamp_deinit: 释放openamp资源。
+````
+    void openamp_deinit(void);
+````
+
+#### 串口服务样例
+rpmsg_pty_demo包含2个源文件，实现通过Linux shell命令行访问Client OS的功能，样例支持多用户多线程场景。
+
+rpmsg_main.c: 初始化OpenAMP，用户创建线程，在线程中运行shell程序。
+
+rpmsg_pty.c: 用户创建PTY虚拟串口设备，将PTY的slave端作为shell，PTY的master端与OpenAMP Endpint节点通信。
+
+1.  安装教程，其他步骤与openamp_demo相同，把DEMO_TARGET换成rpmsg_pty_demo编译。
+````
+    cmake -S . -B build -DDEMO_TARGET=rpmsg_pty_demo
+````
+
+2.  使用说明，为了不影响shell的使用，建议启动qemu时加上console=ttyAMA1内核参数，将内核打印屏蔽。
+````
+    qemu-system-aarch64 -M virt,gic-version=3 -m 1G -cpu cortex-a57 -nographic -kernel zImage -initrd *.rootfs.cpio.gz -append 'mem=768M maxcpus=3 console=ttyAMA1' -smp 4 
+````
+
+树莓派可以通过设置printk在console上的打印优先级屏蔽内核打印。
+````
+    cat /proc/sys/kernel/printk > /tmp/printk_bak
+    echo 1       4       1      7 > /proc/sys/kernel/printk
+````
+
+3.  运行rpmsg_main程序时，把程序放在后台，然后通过screen打开shell。
+````
+    ./rpmsg_main -c 3 -t zephyr_qemu.bin -a 0x7a000000 &
+    screen /dev/pts/0
+````
+
+4.  进入shell，输入help可以查看Client OS支持哪些命令，输入history可以查看历史命令，ctrl+d退出。
+````
+    uart:~$ help
+    uart:~$ history
+````

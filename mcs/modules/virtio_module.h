@@ -19,13 +19,16 @@
 #define VRING_ALIGNMENT            4
 #define VRING_SIZE                 16
 
-#define IRQ_SENDTO_CLIENTOS        _IOW('A', 0, int)
-#define DEV_CLIENT_OS_AGENT        "/dev/cpu_handler"
+#define TXADDR(SHMADDR)     (SHMADDR + VRING_TX_ADDRESS - VDEV_START_ADDR)
+#define RXADDR(SHMADDR)     (SHMADDR + VRING_RX_ADDRESS - VDEV_START_ADDR)
+#define VDEVADDR(SHMADDR)   (SHMADDR + VDEV_STATUS_ADDR - VDEV_START_ADDR)
+#define SHMEMADDR(SHMADDR)  (SHMADDR + SHM_START_ADDR - VDEV_START_ADDR)
 
 void virtio_init(void);
+void virtio_deinit(void);
 
 extern char *cpu_id;
-extern struct metal_io_region *io;
 extern struct virtqueue *vq[2];
+extern void *shmaddr;
 
 #endif

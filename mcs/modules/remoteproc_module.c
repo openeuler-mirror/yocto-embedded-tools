@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <metal/alloc.h>
 #include <metal/io.h>
+#include <sys/ioctl.h>
 #include "remoteproc_module.h"
 
-#define BOOTCMD_MAXSIZE 100
+#define MCS_DEVICE_NAME    "/dev/mcs"
+#define IOC_CPUON          _IOW('A', 1, int)
+#define STR_TO_HEX         16
+#define STR_TO_DEC         10
 
 struct rproc_priv {
     struct remoteproc *rproc;  /* pass a remoteproc instance pointer */
@@ -12,7 +16,7 @@ struct rproc_priv {
     unsigned int boot_address; /* related arg: boot address(in hex format) */
 };
 
-struct remoteproc rproc_inst;
+static struct remoteproc rproc_inst;
 
 static struct remoteproc *rproc_init(struct remoteproc *rproc,
                                      const struct remoteproc_ops *ops, void *args)
@@ -42,30 +46,31 @@ static void rproc_remove(struct remoteproc *rproc)
 
 static int rproc_start(struct remoteproc *rproc)
 {
-    int cpu_handler_fd;
     int ret;
-    char on[BOOTCMD_MAXSIZE];
+    unsigned int boot_args[2];
     struct rproc_priv *args = (struct rproc_priv *)rproc->priv;
 
-    (void)snprintf(on, sizeof(on), "%d%s%d", args->cpu_id, "@", args->boot_address);
-
-    cpu_handler_fd = open(DEV_CLIENT_OS_AGENT, O_RDWR);
-    if (cpu_handler_fd < 0) {
-        printf("failed to open %s\n", DEV_CLIENT_OS_AGENT);
-        return cpu_handler_fd;
+    int fd = open(MCS_DEVICE_NAME, O_RDWR);
+    if (fd < 0) {
+        printf("failed to open %s device.\n", MCS_DEVICE_NAME);
+        return fd;
     }
 
-    ret = write(cpu_handler_fd, on, sizeof(on));
+    boot_args[0] = args->cpu_id;
+    boot_args[1] = args->boot_address;
+    ret = ioctl(fd, IOC_CPUON, boot_args);
+    if (ret) {
+        printf("boot clientos failed\n");
+        return ret;
+    }
+
+    close(fd);
     return 0;
 }
 
 static int rproc_stop(struct remoteproc *rproc)
 {
-#if 0
-    /* send message to zephyr, zephyr shut itself down by PSCI */
-    int ret = send_message("shutdown\r\n", 10);
-    sleep(3);
-#endif
+    /* TODO: send message to clientos, clientos shut itself down by PSCI */
     return 0;
 }
 
@@ -83,11 +88,19 @@ struct remoteproc *create_remoteproc(void)
 
     args.rproc = &rproc_inst;
     args.idx = 1;
-    args.cpu_id = strtol(cpu_id, NULL, 10);
-    args.boot_address = strtol(boot_address, NULL, 16);
+    args.cpu_id = strtol(cpu_id, NULL, STR_TO_DEC);
+    args.boot_address = strtol(target_binaddr, NULL, STR_TO_HEX);
     rproc = remoteproc_init(&rproc_inst, &rproc_ops, &args);
     if (!rproc)
         return NULL;
 
     return rproc;
+}
+
+void destory_remoteproc(void)
+{
+    remoteproc_stop(&rproc_inst); 
+    rproc_inst.state = RPROC_OFFLINE;
+    if (rproc_inst.priv)
+        remoteproc_remove(&rproc_inst);   
 }

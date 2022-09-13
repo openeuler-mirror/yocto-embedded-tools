@@ -13,7 +13,7 @@ extern char *target_binaddr;
 int openamp_init(void);
 
 /* release openamp resource */
-int openamp_deinit(void);
+void openamp_deinit(void);
 
 /* message standard receive interface */
 int receive_message(unsigned char *message, int message_len, int *real_len);
