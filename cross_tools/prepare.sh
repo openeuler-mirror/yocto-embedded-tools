@@ -50,8 +50,9 @@ function download_and_patch() {
 function do_prepare() {
 	[ ! -d "$LIB_PATH" ] && mkdir $LIB_PATH
 	pushd $LIB_PATH
-	delete_dir $KERNEL $GCC $GLIBC $BINUTILS $GMP $MPC $MPFR $ISL $EXPAT $GETTEXT $NCURSES $ZLIB $LIBICONV $GDB
+	delete_dir $KERNEL $GCC $GLIBC $MUSLC $BINUTILS $GMP $MPC $MPFR $ISL $EXPAT $GETTEXT $NCURSES $ZLIB $LIBICONV $GDB
 	git clone -b $KERNEL_BRANCH https://gitee.com/openeuler/kernel.git --depth 1
+	git clone -b $MUSLC_BRANCH https://gitee.com/src-openeuler/musl.git --depth 1 && do_patch musl;
 	download_and_patch $GCC $GLIBC $BINUTILS $GMP $MPC $MPFR $ISL $EXPAT $NCURSES $ZLIB $GDB
 	#LIBICONV and GETTEXT dir is need, but with no code, it will skip when ct-ng build under our openeuler env.
 	mkdir -p $LIB_PATH/$LIBICONV/$LIBICONV_DIR
@@ -73,6 +74,7 @@ function update_config() {
 	sed -i "s#^CT_LINUX_CUSTOM_LOCATION.*#CT_LINUX_CUSTOM_LOCATION=\"$LIB_PATH/kernel\"#g" $WORK_DIR/config_*
 	sed -i "s#^CT_BINUTILS_CUSTOM_LOCATION.*#CT_BINUTILS_CUSTOM_LOCATION=\"$LIB_PATH/$BINUTILS/$BINUTILS_DIR\"#g" $WORK_DIR/config_*
 	sed -i "s#^CT_GLIBC_CUSTOM_LOCATION.*#CT_GLIBC_CUSTOM_LOCATION=\"$LIB_PATH/$GLIBC/$GLIBC_DIR\"#g" $WORK_DIR/config_*
+	sed -i "s#^CT_MUSL_CUSTOM_LOCATION.*#CT_MUSL_CUSTOM_LOCATION=\"$LIB_PATH/$MUSLC/$MUSLC_DIR\"#g" $WORK_DIR/config_*
 	sed -i "s#^CT_GCC_CUSTOM_LOCATION.*#CT_GCC_CUSTOM_LOCATION=\"$LIB_PATH/$GCC/$GCC_DIR\"#g" $WORK_DIR/config_*
 	sed -i "s#^CT_GDB_CUSTOM_LOCATION.*#CT_GDB_CUSTOM_LOCATION=\"$LIB_PATH/$GDB/$GDB_DIR\"#g" $WORK_DIR/config_*
 	sed -i "s#^CT_GMP_CUSTOM_LOCATION.*#CT_GMP_CUSTOM_LOCATION=\"$LIB_PATH/$GMP/$GMP_DIR\"#g" $WORK_DIR/config_*
@@ -138,6 +140,7 @@ main()
 	echo "'cp config_aarch64 .config && ct-ng build' for build arm64"
 	echo "'cp config_x86_64 .config && ct-ng build' for build x86_64"
 	echo "'cp config_riscv64 .config && ct-ng build' for build riscv64"
+	echo "'cp config_aarch64-musl .config && ct-ng build' for build muslc_aarch64"
 }
 
 main "$@"
