@@ -13,25 +13,6 @@
         }
       ]
     },
-    "ipc": {
-      "module_list": [ ],
-      "inner_kits": [
-        {
-          "name": "//depend:ipc_single",
-          "header": {
-            "header_files": [ ],
-            "header_base": "//depend"
-          }
-        },
-        {
-          "name":"//depend:ipc_core",
-          "header": {
-            "header_files": [ ],
-            "header_base": "//depend"
-          }
-        }
-      ]
-    },
     "ces_standard": {
       "module_list": [ ],
       "inner_kits": [
