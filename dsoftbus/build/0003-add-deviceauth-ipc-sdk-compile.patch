@@ -1,0 +1,25 @@
+From 28c35ffaa2a84a7cebc3827ab83aec0ca39224f3 Mon Sep 17 00:00:00 2001
+From: hmilylmk <liumingkai@huawei.com>
+Date: Wed, 14 Sep 2022 14:38:28 +0800
+Subject: [PATCH] add deviceauth ipc sdk compile
+
+Signed-off-by: hmilylmk <liumingkai@huawei.com>
+---
+ core/gn/BUILD.gn | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/gn/BUILD.gn b/core/gn/BUILD.gn
+index 9784cda..9c38fe4 100755
+--- a/core/gn/BUILD.gn
++++ b/core/gn/BUILD.gn
+@@ -90,6 +90,7 @@ if (product_name == "ohos-sdk") {
+     deps = [
+       "//foundation/communication/dsoftbus/core/frame:softbus_server_main",
+       "//foundation/communication/dsoftbus/sdk:softbus_client",
++      "//base/security/deviceauth/services:deviceauth_sdk",
+     ]
+   }
+ }
+-- 
+2.32.0
+
