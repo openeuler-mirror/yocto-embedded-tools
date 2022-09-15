@@ -1,18 +1,18 @@
-From f82adf1e60967ea5d2fe21fd4476025712849062 Mon Sep 17 00:00:00 2001
-From: hmilylmk <liumingkai@huawei.com>
-Date: Wed, 14 Sep 2022 15:29:46 +0800
+From 31f1a71fee10a1248de00ea1f36eeaf80e683673 Mon Sep 17 00:00:00 2001
+From: "beiling.xie" <xiekunxun@huawei.com>
+Date: Fri, 16 Sep 2022 01:11:40 +0800
 Subject: [PATCH] adapter deviceauth ipc service
 
-Signed-off-by: hmilylmk <liumingkai@huawei.com>
+Signed-off-by: beiling.xie <xiekunxun@huawei.com>
 ---
  frameworks/inc/ipc_service.h                  |  2 ++
  frameworks/src/ipc_service.c                  | 16 +-----------
  frameworks/src/standard/ipc_adapt.cpp         | 18 +++++++------
  .../src/standard/ipc_dev_auth_proxy.cpp       | 25 ++++---------------
  frameworks/src/standard/ipc_dev_auth_stub.cpp |  7 +-----
- services/BUILD.gn                             |  6 +++++
+ services/BUILD.gn                             | 15 ++++++++++-
  services/device_auth.c                        |  6 +++++
- 7 files changed, 31 insertions(+), 49 deletions(-)
+ 7 files changed, 39 insertions(+), 50 deletions(-)
 
 diff --git a/frameworks/inc/ipc_service.h b/frameworks/inc/ipc_service.h
 index e3eb11b..ed73555 100755
@@ -196,7 +196,7 @@ index e33b770..648bc3b 100644
      sptr<ICommIpcCallback> proxy = iface_cast<ICommIpcCallback>(g_cbStub[objIdx].cbStub);
      proxy->DoCallBack(callbackId, cbHook, dataParcel, reply, option);
 diff --git a/services/BUILD.gn b/services/BUILD.gn
-index b2cdb17..96723f7 100644
+index b2cdb17..ce6e24b 100644
 --- a/services/BUILD.gn
 +++ b/services/BUILD.gn
 @@ -142,9 +142,14 @@ if (defined(ohos_lite)) {
@@ -222,6 +222,31 @@ index b2cdb17..96723f7 100644
      ]
      if (support_jsapi) {
        external_deps += [ "os_account_standard:os_account_innerkits" ]
+@@ -238,6 +244,12 @@ if (defined(ohos_lite)) {
+     sources = deviceauth_ipc_files
+     sources += permission_adapter_files
+     sources += [ "${frameworks_path}/src/ipc_sdk.c" ]
++    sources += [ "${os_adapter_path}/impl/src/hc_log.c" ]
++    sources += [ "${os_adapter_path}/impl/src/linux/hc_types.c" ]
++    sources += [ "${os_adapter_path}/impl/src/hc_mutex.c" ]
++    sources += [ "${common_lib_path}/impl/src/json_utils.c" ]
++    sources += [ "${common_lib_path}/impl/src/string_util.c" ]
++    sources += [ "${common_lib_path}/impl/src/clib_types.c" ]
+ 
+     defines = [
+       "__LINUX__",
+@@ -250,9 +262,10 @@ if (defined(ohos_lite)) {
+     }
+ 
+     deps = [
+-      "${deps_adapter_path}:${hal_module_name}",
+       "//third_party/cJSON:cjson_static",
+       "//utils/native/base:utils",
++      "//third_party/bounds_checking_function:libsec_shared",
++      "//third_party/cJSON:cjson_static",
+     ]
+ 
+     external_deps = [
 diff --git a/services/device_auth.c b/services/device_auth.c
 index e09dce4..16f6200 100644
 --- a/services/device_auth.c
@@ -247,5 +272,5 @@ index e09dce4..16f6200 100644
      LOGI("[End]: [Service]: Init device auth service successfully!");
      return HC_SUCCESS;
 -- 
-2.32.0
+2.25.1
 
