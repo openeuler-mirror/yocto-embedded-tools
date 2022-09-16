@@ -34,16 +34,20 @@ OpenAMP包括如下三大重要组件：
 
 #### 安装教程
 
-1.  根据openEuler Embedded使用手册安装SDK并设置SDK环境变量。
+1.  qemu使用openeuler-image镜像运行混合部署。
 
-2.  编译内核模块mcs_km.ko，编译方式如下:
+树莓派使用openeuler-image-uefi镜像运行混合部署，该镜像对齐tiny镜像的软件包配置，并集成openssh支持网络登录、混合部署依赖库、混合部署保留内存mcsmem dtoverlay、以及第三方UEFI固件支持PSCI功能。openeuler-image-uefi镜像的构建、烧录和启动，请参考openEuler Embedded在线文档章节：树莓派的UEFI支持和网络启动。
+
+2.  根据openEuler Embedded使用手册安装SDK并设置SDK环境变量。
+
+3.  编译内核模块mcs_km.ko，编译方式如下:
 
 ````
     cd mcs_km
     make
 ````
 
-3.  编译openamp_demo用户态程序rpmsg_main，编译方式如下:
+4.  编译openamp_demo用户态程序rpmsg_main，编译方式如下:
 
 ````
     cmake -S . -B build -DDEMO_TARGET=openamp_demo
@@ -51,18 +55,18 @@ OpenAMP包括如下三大重要组件：
     make
 ````
 
-注意：此处定义OpenAMP通信设备共享内存起始地址为0x70000000，可根据实际内存分配进行修改。
+注意：此处定义OpenAMP通信设备保留内存起始地址为0x70000000，可根据实际内存分配进行修改。
 如果需要查看调试日志，可以给cmake增加-DDEBUG参数。
 
-4.  将编译好的KO模块、用户态程序，以及zephyr_qemu.bin镜像拷贝到openEuler Embedded系统的目录下。如何拷贝可以参考使用手册中共享文件系统场景。
+5.  将编译好的KO模块、用户态程序，以及zephyr_qemu.bin镜像拷贝到openEuler Embedded系统的目录下。如何拷贝可以参考使用手册中共享文件系统场景。
 
-5.  将OpenAMP的依赖库libmetal.so*，libopen_amp.so*拷贝至文件系统/usr/lib64目录，libsysfs.so* 拷贝至文件系统/lib64目录。对应so可在sdk目录中找到，如何拷贝可以参考使用手册中共享文件系统场景。
+6.  将OpenAMP的依赖库libmetal.so\*，libopen_amp.so\*拷贝至文件系统/usr/lib64目录，libsysfs.so\*拷贝至文件系统/lib64目录。对应so可在sdk目录中找到，如何拷贝可以参考使用手册中共享文件系统场景。
 
 #### 使用说明
 
 1.  通过QEMU启动openEuler Embedded镜像，如何启动可参考使用手册中QEMU使用与调试章节。树莓派跳过这一步。
 
--以上述demo为例，需要预留出地址0x70000000为起始的内存用于OpenAMP demo和Client OS启动。通过QEMU启动时，当指定-m 1G时默认使用0x40000000-0x80000000的系统内存。添加内核启动参数mem=768M，可预留地址为0x70000000-0x80000000的256M内存。
+-以上述demo为例，需要预留出地址0x70000000为起始的内存用于OpenAMP demo和Client OS启动。通过QEMU启动时，当指定-m 1G时默认使用0x40000000-0x80000000的系统内存。添加内核启动参数mem=768M，可预留地址为0x70000000-0x80000000的256M保留内存。
 -在样例中在cpu 3启动Client OS，需要预留出3号cpu。
 -样例中zephyr镜像默认gic版本为3，需要在QEMU中设置。
 
@@ -91,7 +95,7 @@ OpenAMP包括如下三大重要组件：
 此处定义Client OS起始地址为0x7a000000，Client OS镜像名为zephyr_qemu.bin，Client OS从3号cpu启动。树莓派换成zephyr_rpi.bin。
 
 #### 用户样例开发
-mcs提供了4个API，供用户做样例开发，用户无需感知OpenAMP实现细节，接口定义在openamp_module.h。
+mcs提供了4个API，供用户做样例开发，用户无需感知OpenAMP实现细节，接口定义在modules/openamp_module.h。
 
 1.  openamp_init: 初始化保留内存，加载zephyr镜像文件，初始化remoteproc、virtio、rpmsg，建立Linux与Client OS两端配对的endpoint，供消息收发使用。
 ````
