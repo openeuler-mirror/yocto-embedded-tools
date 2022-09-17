@@ -15,6 +15,10 @@ TEST_WORK_DIR=
 
 # 测试运行的测试套名
 run_suitecase=
+# 可以忽略的测试失败用例
+ignoreFail=
+#qemu启动时等待的时间
+qemu_option_wait_time=
 # 多测试套结果保存文件夹
 results_path=
 
@@ -115,8 +119,6 @@ function result_output() {
 }
 
 function test_result_ana() {
-    # 可以忽略的测试失败用例
-    ignoreFail=("oe_test_check_file_sys_protect_005" "oe_test_check_network_firewall_001" "oe_test_check_network_firewall_002" "oe_test_check_ssh_config_002" "oe_test_check_file_sys_protect_004")
     for one_suite in ${run_suitecase[@]}; do
         checkFail=""
         if [ -e ${results_path}/${one_suite}/failed ]; then
@@ -172,7 +174,7 @@ function run_test() {
                                     --kernal_img_path "${run_test_dir}/image/${BUILD_ARCH}/zImage" \
                                     --initrd_path "${run_test_dir}/image/${BUILD_ARCH}/initrd" \
                                     --login_wait_str "${wait_login_str}" \
-                                    --option_wait_time 120
+                                    --option_wait_time ${qemu_option_wait_time}
             rem_run_str="-s"
             need_env_str=""
         elif [[ $IMAGE_TYPE == "tiny" ]]; then
@@ -237,6 +239,8 @@ function set_param() {
     IMAGE_OUT_DIR=$4
     TEST_WORK_DIR=$5
     run_suitecase=$6
+    ignoreFail=$7
+    qemu_option_wait_time=$8
 
     if [ -z $IMAGE_TYPE ]; then
         IMAGE_TYPE="std"
@@ -265,6 +269,10 @@ function set_param() {
         elif [[ $IMAGE_TYPE == "tiny" ]]; then
             run_suitecase=("embedded_tiny_image_test")
         fi
+    fi
+
+    if [ -z $qemu_option_wait_time ]; then
+        qemu_option_wait_time=180
     fi
 }
 
