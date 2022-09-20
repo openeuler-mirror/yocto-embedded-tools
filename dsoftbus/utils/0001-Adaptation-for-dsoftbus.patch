@@ -1,39 +1,19 @@
-From ecb011a769e1b403a9b0d4203ac3f8b7c1c77228 Mon Sep 17 00:00:00 2001
+From 28bfe4c02841e82fa67ade0665e31a2cec617f5a Mon Sep 17 00:00:00 2001
 From: "beiling.xie" <xiekunxun@huawei.com>
-Date: Wed, 23 Mar 2022 22:48:56 +0800
+Date: Tue, 20 Sep 2022 09:40:28 +0800
 Subject: [PATCH] Adaptation for dsoftbus
 
 Signed-off-by: beiling.xie <xiekunxun@huawei.com>
 ---
- base/BUILD.gn       | 145 +-------------------------------------------
- base/src/parcel.cpp |   1 +
- 2 files changed, 4 insertions(+), 142 deletions(-)
+ base/BUILD.gn       | 21 +--------------------
+ base/src/parcel.cpp |  1 +
+ 2 files changed, 2 insertions(+), 20 deletions(-)
 
 diff --git a/base/BUILD.gn b/base/BUILD.gn
-index 318bbe7..2c9d6db 100644
+index 883b1ec..5785192 100644
 --- a/base/BUILD.gn
 +++ b/base/BUILD.gn
-@@ -14,161 +14,22 @@ import("//build/ohos.gni")
- 
- ###############################################################################
- config("utils_config") {
--  visibility = [ ":*" ]
-   include_dirs = [
-     "include",
--    "//developtools/liblog",
--  ]
--  cflags = []
--  if (current_os == "mingw") {
--    cflags += [ "-Wno-error=inconsistent-dllimport" ]
--  }
--}
--
--config("static_utils_config") {
--  visibility = [ ":*" ]
--  include_dirs = [
--    "include",
--    "//developtools/liblog",
-   ]
+@@ -38,24 +38,8 @@ config("static_utils_config") {
  }
  
  sources_utils = [
@@ -55,141 +35,47 @@ index 318bbe7..2c9d6db 100644
 -  "src/timer_event_handler.cpp",
 -  "src/ashmem.cpp",
 -  "src/rwlock.cpp",
--  "src/securec/fscanf_s.c",
--  "src/securec/fwscanf_s.c",
--  "src/securec/gets_s.c",
--  "src/securec/memcpy_s.c",
--  "src/securec/memmove_s.c",
--  "src/securec/memset_s.c",
--  "src/securec/scanf_s.c",
--  "src/securec/securecutil.c",
--  "src/securec/secureinput_a.c",
--  "src/securec/secureinput_w.c",
--  "src/securec/secureprintoutput_a.c",
--  "src/securec/secureprintoutput_w.c",
--  "src/securec/snprintf_s.c",
--  "src/securec/sprintf_s.c",
--  "src/securec/sscanf_s.c",
--  "src/securec/strcat_s.c",
--  "src/securec/strcpy_s.c",
--  "src/securec/strncat_s.c",
--  "src/securec/strncpy_s.c",
--  "src/securec/strtok_s.c",
--  "src/securec/swprintf_s.c",
--  "src/securec/swscanf_s.c",
--  "src/securec/vfscanf_s.c",
--  "src/securec/vfwscanf_s.c",
--  "src/securec/vscanf_s.c",
--  "src/securec/vsnprintf_s.c",
--  "src/securec/vsprintf_s.c",
--  "src/securec/vsscanf_s.c",
--  "src/securec/vswprintf_s.c",
--  "src/securec/vswscanf_s.c",
--  "src/securec/vwscanf_s.c",
--  "src/securec/wcscat_s.c",
--  "src/securec/wcscpy_s.c",
--  "src/securec/wcsncat_s.c",
--  "src/securec/wcsncpy_s.c",
--  "src/securec/wcstok_s.c",
--  "src/securec/wmemcpy_s.c",
--  "src/securec/wmemmove_s.c",
--  "src/securec/wscanf_s.c",
  ]
  
--ohos_static_library("utilsbase") {
--  sources = sources_utils
--  configs = [ ":utils_config" ]
--  defines = [ "CONFIG_HILOG" ]
--  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
--}
--
- ohos_shared_library("utils") {
-   sources = sources_utils
--  configs = [ ":utils_config" ]
--  subsystem_name = "utils"
--  defines = [ "CONFIG_HILOG" ]
--  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
--  part_name = "utils_base"
--  install_images = [
--    "system",
--    "updater",
--  ]
--}
--
--securec_sources = [
--  "src/securec/fscanf_s.c",
--  "src/securec/fwscanf_s.c",
--  "src/securec/gets_s.c",
--  "src/securec/memcpy_s.c",
--  "src/securec/memmove_s.c",
--  "src/securec/memset_s.c",
--  "src/securec/scanf_s.c",
--  "src/securec/securecutil.c",
--  "src/securec/secureinput_a.c",
--  "src/securec/secureinput_w.c",
--  "src/securec/secureprintoutput_a.c",
--  "src/securec/secureprintoutput_w.c",
--  "src/securec/snprintf_s.c",
--  "src/securec/sprintf_s.c",
--  "src/securec/sscanf_s.c",
--  "src/securec/strcat_s.c",
--  "src/securec/strcpy_s.c",
--  "src/securec/strncat_s.c",
--  "src/securec/strncpy_s.c",
--  "src/securec/strtok_s.c",
--  "src/securec/swprintf_s.c",
--  "src/securec/swscanf_s.c",
--  "src/securec/vfscanf_s.c",
--  "src/securec/vfwscanf_s.c",
--  "src/securec/vscanf_s.c",
--  "src/securec/vsnprintf_s.c",
--  "src/securec/vsnprintf_s_p.c",
--  "src/securec/vsprintf_s.c",
--  "src/securec/vsscanf_s.c",
--  "src/securec/vswprintf_s.c",
--  "src/securec/vswscanf_s.c",
--  "src/securec/vwscanf_s.c",
--  "src/securec/wcscat_s.c",
--  "src/securec/wcscpy_s.c",
--  "src/securec/wcsncat_s.c",
--  "src/securec/wcsncpy_s.c",
--  "src/securec/wcstok_s.c",
--  "src/securec/wmemcpy_s.c",
--  "src/securec/wmemmove_s.c",
--  "src/securec/wscanf_s.c",
--]
--
--ohos_static_library("utilsecurec") {
--  sources = securec_sources
--  configs = [ ":utils_config" ]
-+  public_configs = [ ":utils_config" ]
-+  deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
+ securec_sources = [
+@@ -110,7 +94,6 @@ ohos_static_library("utilsbase") {
+   ]
+   public_configs = [ ":static_utils_config" ]
+   defines = [ "CONFIG_HILOG" ]
+-  external_deps = [ "hilog_native:libhilog_base" ]
  }
  
--ohos_shared_library("utilsecurec_shared") {
--  sources = securec_sources
--  configs = [ ":utils_config" ]
--  public_configs = [ ":utils_config" ]
+ ohos_shared_library("utils") {
+@@ -123,8 +106,7 @@ ohos_shared_library("utils") {
+   public_configs = [ ":static_utils_config" ]
+   subsystem_name = "utils"
+   defines = [ "CONFIG_HILOG" ]
+-  external_deps = [ "hilog_native:libhilog_base" ]
 -  part_name = "utils_base"
--  install_images = [
--    "system",
--    "updater",
--  ]
-+group("utilsecurec_shared") {
- }
- ###############################################################################
++  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+   install_images = [
+     "system",
+     "updater",
+@@ -166,7 +148,6 @@ ohos_shared_library("utilsecurec_shared") {
+     ":private_securec_config",
+   ]
+   public_configs = [ ":utils_config" ]
+-  part_name = "utils_base"
+   install_images = [
+     "system",
+     "updater",
 diff --git a/base/src/parcel.cpp b/base/src/parcel.cpp
-index 83621f2..915f8ca 100755
+index 855f7cf..1abaec5 100755
 --- a/base/src/parcel.cpp
 +++ b/base/src/parcel.cpp
-@@ -16,6 +16,7 @@
+@@ -13,6 +13,7 @@
+  * limitations under the License.
+  */
+ 
++#include <climits>
  #include "parcel.h"
  #include "securec.h"
  #include "utils_log.h"
-+#include <climits>
- 
- namespace OHOS {
- 
 -- 
-2.27.0
+2.25.1
 

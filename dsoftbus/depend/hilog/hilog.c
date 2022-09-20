@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "securec.h"
+#include "hilog_base/log_base.h"
 
 #ifndef LOG_PRINT_MAX_LEN
 #define LOG_PRINT_MAX_LEN 256
