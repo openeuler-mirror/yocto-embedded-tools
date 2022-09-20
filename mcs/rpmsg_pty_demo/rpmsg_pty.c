@@ -11,6 +11,7 @@
 /* define the keys according to your terminfo */
 #define KEY_CTRL_D      4
 #define FILE_MODE       0644
+#define PTSNAME_LEN     20
 
 pthread_mutex_t mutex;
 
@@ -18,6 +19,7 @@ void open_pty(int *pfdm, int *pfds, const char *pty_name)
 {
     int ret;
     int fdm, fds;
+    char pts_name[PTSNAME_LEN] = {0};
 
     /* Open the master side of the PTY */
     fdm = posix_openpt(O_RDWR | O_NOCTTY);
@@ -33,8 +35,15 @@ void open_pty(int *pfdm, int *pfds, const char *pty_name)
         printf("Error %d on unlockpt()\n", errno);
 
     /* Open the slave side of the PTY */
-    fds = open(ptsname(fdm), O_RDWR | O_NOCTTY);
-    printf("open a new terminal, zephyr %s: screen %s\n", pty_name, ptsname(fdm));
+    ret = ptsname_r(fdm, pts_name, sizeof(pts_name));
+    if (ret != 0)
+        printf("Error %d on ptsname_r()\n", errno);
+
+    fds = open(pts_name, O_RDWR | O_NOCTTY);
+    if (ret != 0)
+        printf("Error %d on open()\n", errno);
+
+    printf("open a new terminal, zephyr %s: screen %s\n", pty_name, pts_name);
 
     *pfdm = fdm;
     *pfds = fds;

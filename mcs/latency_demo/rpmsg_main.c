@@ -14,27 +14,29 @@ static void cleanup(int sig)
 int rpmsg_app_master(void)
 {
     int ret;
-    int message = 0;
+    char buf[2048] = {0};
     int len;
+    int i;
 
-    printf("start processing OpenAMP demo...\n");
+    printf("start latency measure demo...\n");
 
-    while (message < 99) {
-        ret = send_message((unsigned char*)&message, sizeof(message));
-        if (ret < 0) {
-            printf("send_message(%u) failed with status %d\n", message, ret);
-            return ret;
-        }
-        sleep(1);
+    /* linux send messsage to clientos first */
+    ret = send_message("latency_demo\n", sizeof("latency_demo\n"));
+    if (ret < 0) {
+        printf("send_message failed with status %d\n", ret);
+        return ret;
+    }
 
-        ret = receive_message((unsigned char*)&message, sizeof(message), &len);
+    while (1) {
+        ret = receive_message(buf, sizeof(buf), &len);
         if (ret < 0) {
             printf("receive_message failed with status %d\n", ret);
             return ret;
         }
-        printf("Master core received a message: %u\n", message);
-        message++;
-        sleep(1);
+
+        /* show message */
+        for (i = 0; i < len; i++)
+            printf("%c", buf[i]);
     }
 
     return 0;

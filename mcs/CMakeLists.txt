@@ -29,6 +29,7 @@ set(SRC_FILE
 )
 
 if(DEMO_TARGET MATCHES "openamp_demo")
+elseif(DEMO_TARGET MATCHES "latency_demo")
 elseif(DEMO_TARGET MATCHES "rpmsg_pty_demo")
 	list(APPEND SRC_FILE "./${DEMO_TARGET}/rpmsg_pty.c")
 else()

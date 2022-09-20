@@ -8,12 +8,19 @@ char *cpu_id;
 char *target_binfile;
 char *target_binaddr;
 
+static void cleanup(int sig)
+{
+    openamp_deinit();
+    pthread_mutex_destroy(&mutex);
+}
+
 int rpmsg_app_master(void)
 {
     pthread_t tida, tidb, tidc;
 
     printf("Multi-thread processing user requests...\n");
 
+    /* init mutex as thread lock */
     pthread_mutex_init(&mutex, NULL);
 
     /* userA, zephyr shell, open with screen */
@@ -39,6 +46,9 @@ int main(int argc, char **argv)
 {
     int ret;
     int opt;
+
+    /* ctrl+c signal, do cleanup before program exit */
+    signal(SIGINT, cleanup);
 
     while ((opt = getopt(argc, argv, "c:t:a:")) != -1) {
         switch (opt) {
