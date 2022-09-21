@@ -1,16 +1,16 @@
-From 28bfe4c02841e82fa67ade0665e31a2cec617f5a Mon Sep 17 00:00:00 2001
+From 0ab221f7828e67d59b310df9a69ed4b4399f525d Mon Sep 17 00:00:00 2001
 From: "beiling.xie" <xiekunxun@huawei.com>
-Date: Tue, 20 Sep 2022 09:40:28 +0800
+Date: Wed, 21 Sep 2022 11:57:27 +0800
 Subject: [PATCH] Adaptation for dsoftbus
 
 Signed-off-by: beiling.xie <xiekunxun@huawei.com>
 ---
- base/BUILD.gn       | 21 +--------------------
+ base/BUILD.gn       | 37 ++++---------------------------------
  base/src/parcel.cpp |  1 +
- 2 files changed, 2 insertions(+), 20 deletions(-)
+ 2 files changed, 5 insertions(+), 33 deletions(-)
 
 diff --git a/base/BUILD.gn b/base/BUILD.gn
-index 883b1ec..5785192 100644
+index 883b1ec..ca53096 100644
 --- a/base/BUILD.gn
 +++ b/base/BUILD.gn
 @@ -38,24 +38,8 @@ config("static_utils_config") {
@@ -38,7 +38,7 @@ index 883b1ec..5785192 100644
  ]
  
  securec_sources = [
-@@ -110,7 +94,6 @@ ohos_static_library("utilsbase") {
+@@ -110,21 +94,18 @@ ohos_static_library("utilsbase") {
    ]
    public_configs = [ ":static_utils_config" ]
    defines = [ "CONFIG_HILOG" ]
@@ -46,24 +46,42 @@ index 883b1ec..5785192 100644
  }
  
  ohos_shared_library("utils") {
-@@ -123,8 +106,7 @@ ohos_shared_library("utils") {
+   sources = sources_utils
+-  sources += securec_sources
+   configs = [
+     ":utils_config",
+     ":private_securec_config",
+   ]
    public_configs = [ ":static_utils_config" ]
-   subsystem_name = "utils"
+-  subsystem_name = "utils"
    defines = [ "CONFIG_HILOG" ]
 -  external_deps = [ "hilog_native:libhilog_base" ]
 -  part_name = "utils_base"
++  deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
 +  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
    install_images = [
      "system",
      "updater",
-@@ -166,7 +148,6 @@ ohos_shared_library("utilsecurec_shared") {
-     ":private_securec_config",
-   ]
-   public_configs = [ ":utils_config" ]
+@@ -159,17 +140,7 @@ ohos_static_library("utilsecurec_ace_allplatforms") {
+   public_configs = [ ":static_utils_config" ]
+ }
+ 
+-ohos_shared_library("utilsecurec_shared") {
+-  sources = securec_sources
+-  configs = [
+-    ":utils_config",
+-    ":private_securec_config",
+-  ]
+-  public_configs = [ ":utils_config" ]
 -  part_name = "utils_base"
-   install_images = [
-     "system",
-     "updater",
+-  install_images = [
+-    "system",
+-    "updater",
+-  ]
++group("utilsecurec_shared") {
+ }
++
+ ###############################################################################
 diff --git a/base/src/parcel.cpp b/base/src/parcel.cpp
 index 855f7cf..1abaec5 100755
 --- a/base/src/parcel.cpp
