@@ -3,6 +3,10 @@
 
 #include <openamp/remoteproc.h>
 
+#define CPU_STATE_ON          0
+#define CPU_STATE_OFF         1
+#define CPU_STATE_ON_PENDING  2
+
 /* create remoteproc */
 struct remoteproc *create_remoteproc(void);
 
@@ -23,6 +27,9 @@ struct remoteproc *create_remoteproc(void);
 
 /* destory remoteproc */
 void destory_remoteproc(void);
+
+/* acquire cpu power state */
+int acquire_cpu_state(void);
 
 extern char *cpu_id;
 extern char *target_binaddr;

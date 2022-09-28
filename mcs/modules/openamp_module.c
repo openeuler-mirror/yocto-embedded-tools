@@ -51,7 +51,19 @@ static int reserved_mem_init(void)
     file_addr = mmap(NULL, binsize, PROT_READ, MAP_PRIVATE, binfd, 0);
     memcpy(binaddr, file_addr, binsize);
 
+    close(binfd);
+
     return 0;
+}
+
+static void reserved_mem_release(void)
+{
+    if (shmaddr)
+        munmap(shmaddr, VDEV_SIZE);
+    if (binaddr)
+        munmap(binaddr, binsize);
+    if (memfd)
+        close(memfd);
 }
 
 int openamp_init(void)
@@ -60,6 +72,14 @@ int openamp_init(void)
     struct remoteproc *rproc;
     unsigned char message[100];
     int len;
+    int cpu_state;
+
+    /* secondary core power state must be CPU_STATE_OFF, avoid initialize repeatedly */
+    cpu_state = acquire_cpu_state();
+    if (cpu_state != CPU_STATE_OFF) {
+        printf("cpu(%s) is already on(%d).\n", cpu_id, cpu_state);
+        return -1;
+    }
 
     ret = reserved_mem_init();
     if (ret) {
@@ -91,13 +111,7 @@ void openamp_deinit(void)
 {
     printf("\nOpenAMP demo ended.\n");
 
+    destory_remoteproc(); /* shutdown clientos first */
     virtio_deinit();
-    destory_remoteproc();
-
-    if (shmaddr)
-        munmap(shmaddr, VDEV_SIZE);
-    if (binaddr)
-        munmap(binaddr, binsize);
-    if (memfd)
-        close(memfd);
+    reserved_mem_release();
 }

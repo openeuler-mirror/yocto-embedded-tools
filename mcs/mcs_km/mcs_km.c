@@ -14,10 +14,12 @@
 
 #define MCS_DEVICE_NAME    "mcs"
 #define CPU_ON_FUNCID       0xC4000003
+#define AFFINITY_INFO_FUNCID   0xC4000004
 
 #define MAGIC_NUMBER       'A'
 #define IOC_SENDIPI        _IOW(MAGIC_NUMBER, 0, int)
 #define IOC_CPUON          _IOW(MAGIC_NUMBER, 1, int)
+#define IOC_AFFINITY_INFO  _IOW(MAGIC_NUMBER, 2, int)
 #define IOC_MAXNR          2
 
 #define OPENAMP_INIT_TRIGGER      0x0
@@ -29,11 +31,10 @@
 
 static struct class *mcs_class;
 static int mcs_major;
-static int cpu_state;
 
 static u64 valid_start;
 static u64 valid_end;
-static const char *smccc_method;
+static const char *smccc_method = "hvc";
 
 static DECLARE_WAIT_QUEUE_HEAD(openamp_trigger_wait);
 static int openamp_trigger;
@@ -68,15 +69,6 @@ static void send_clientos_ipi(const struct cpumask *target)
     ipi_send_mask(OPENAMP_IRQ, target);
 }
 
-static ssize_t mcs_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-{
-	ssize_t len;
-	char res[32];
-
-	len = scnprintf(res, sizeof(res), "%d\n", cpu_state);
-	return simple_read_from_buffer(buf, count, ppos, res, len);
-}
-
 static unsigned int mcs_poll(struct file *file, poll_table *wait)
 {
     unsigned int mask;
@@ -102,38 +94,43 @@ static long mcs_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
         return -EINVAL;
     err = !access_ok((void*)arg, _IOC_SIZE(cmd));
     if (err)
-        return -EINVAL; 
+        return -EINVAL;
 
     switch (cmd) {
         case IOC_SENDIPI:
             cpu_id = (int)arg;
             pr_info("mcs_km: received ioctl cmd to send ipi to cpu(%d)\n", cpu_id);
             send_clientos_ipi(cpumask_of(cpu_id));
-            return 0;
+            break;
         case IOC_CPUON:
             cpu_id = *(unsigned int*)arg;
             cpu_boot_addr = *((unsigned int*)arg + 1);
 
-            if (cpu_state == 1) {
-                pr_info("mcs_km: clientos already boot on cpu(%d)\n", cpu_id);
-                return 0;
+            pr_info("mcs_km: start booting clientos on cpu(%d) addr(0x%x) smccc(%s)\n", cpu_id, cpu_boot_addr, smccc_method);
+            if (strcmp(smccc_method, "smc") == 0)
+                arm_smccc_smc(CPU_ON_FUNCID, cpu_id, cpu_boot_addr, 0, 0, 0, 0, 0, &res);
+            else
+                arm_smccc_hvc(CPU_ON_FUNCID, cpu_id, cpu_boot_addr, 0, 0, 0, 0, 0, &res);
+            if (res.a0) {
+                pr_err("mcs_km: boot clientos failed(%ld)\n", res.a0);
+                return -EINVAL;
             }
+            break;
+        case IOC_AFFINITY_INFO:
+            cpu_id = *(unsigned int*)arg;
 
-            if (smccc_method == NULL)
-                smccc_method = "hvc";
-
-            if (cpu_state == 0) {
-                pr_info("mcs_km: start booting clientos on cpu(%d) addr(0x%x) smccc(%s)\n", cpu_id, cpu_boot_addr, smccc_method);
-                if (strcmp(smccc_method, "smc") == 0)
-                    arm_smccc_smc(CPU_ON_FUNCID, cpu_id, cpu_boot_addr, 0, 0, 0, 0, 0, &res);
-                else
-                    arm_smccc_hvc(CPU_ON_FUNCID, cpu_id, cpu_boot_addr, 0, 0, 0, 0, 0, &res);
-                cpu_state = 1;
-            }
-            return 0;
+            if (strcmp(smccc_method, "smc") == 0)
+                arm_smccc_smc(AFFINITY_INFO_FUNCID, cpu_id, 0, 0, 0, 0, 0, 0, &res);
+            else
+                arm_smccc_hvc(AFFINITY_INFO_FUNCID, cpu_id, 0, 0, 0, 0, 0, 0, &res);
+            *(unsigned int*)arg = res.a0;
+            break;
         default:
+            pr_err("mcs_km: IOC param invalid(0x%x)\n", cmd);
             return -EINVAL;
     }
+
+    return 0;
 }
 
 #ifdef CONFIG_STRICT_DEVMEM
@@ -235,7 +232,6 @@ static int mcs_open(struct inode *inode, struct file *filp)
 static const struct file_operations mcs_fops = {
 	.open = mcs_open,
 	.mmap = mcs_mmap,
-	.read = mcs_read,
 	.poll = mcs_poll,
 	.unlocked_ioctl = mcs_ioctl,
 	.llseek = generic_file_llseek,

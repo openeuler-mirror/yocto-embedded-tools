@@ -8,6 +8,7 @@
 
 extern char *target_binfile;
 extern char *target_binaddr;
+extern char *cpu_id;
 
 /* initialize openamp module, including remoteproc, virtio, rpmsg */
 int openamp_init(void);

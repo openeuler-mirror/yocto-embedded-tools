@@ -12,6 +12,7 @@ static void cleanup(int sig)
 {
     openamp_deinit();
     pthread_mutex_destroy(&mutex);
+    exit(0);
 }
 
 int rpmsg_app_master(void)

@@ -3,9 +3,11 @@
 #include <metal/io.h>
 #include <sys/ioctl.h>
 #include "remoteproc_module.h"
+#include "openamp_module.h"
 
 #define MCS_DEVICE_NAME    "/dev/mcs"
 #define IOC_CPUON          _IOW('A', 1, int)
+#define IOC_AFFINITY_INFO  _IOW('A', 2, int)
 #define STR_TO_HEX         16
 #define STR_TO_DEC         10
 
@@ -71,6 +73,8 @@ static int rproc_start(struct remoteproc *rproc)
 static int rproc_stop(struct remoteproc *rproc)
 {
     /* TODO: send message to clientos, clientos shut itself down by PSCI */
+    send_message("shutdown", sizeof("shutdown"));
+
     return 0;
 }
 
@@ -103,4 +107,27 @@ void destory_remoteproc(void)
     rproc_inst.state = RPROC_OFFLINE;
     if (rproc_inst.priv)
         remoteproc_remove(&rproc_inst);   
+}
+
+int acquire_cpu_state(void)
+{
+    int ret;
+    int fd;
+    unsigned int state_arg;
+
+    fd = open(MCS_DEVICE_NAME, O_RDWR);
+    if (fd < 0) {
+        printf("open %s device failed\n", MCS_DEVICE_NAME);
+        return fd;
+    }
+
+    state_arg = strtol(cpu_id, NULL, STR_TO_DEC);
+    ret = ioctl(fd, IOC_AFFINITY_INFO, &state_arg);
+    if (ret) {
+        printf("acquire cpu state failed\n");
+        return ret;
+    }
+
+    close(fd);
+    return state_arg;  /* secondary core power state */
 }

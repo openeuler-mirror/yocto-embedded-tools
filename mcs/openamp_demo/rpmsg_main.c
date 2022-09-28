@@ -9,6 +9,7 @@ char *target_binaddr;
 static void cleanup(int sig)
 {
     openamp_deinit();
+    exit(0);
 }
 
 int rpmsg_app_master(void)

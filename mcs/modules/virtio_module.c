@@ -125,11 +125,7 @@ void virtio_init(void)
 
 void virtio_deinit(void)
 {
+    rpmsg_deinit_vdev(&rvdev);
     if (io)
         free(io);
-    if (vq[0])
-    	virtqueue_free(vq[0]);
-    if (vq[1])
-    	virtqueue_free(vq[1]);
-    rpmsg_deinit_vdev(&rvdev);
 }
