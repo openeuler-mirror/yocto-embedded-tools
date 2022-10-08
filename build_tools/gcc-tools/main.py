@@ -61,7 +61,7 @@ def main():
     BASEDST = args.dst
     WHO = getpass.getuser()
     XTOOLSDIR = os.path.join("/home", WHO, "x-tools")
-    XTOOLSDIR = os.path.join(os.getcwd(), "cross_tools")
+    CROSSDIR = os.path.join(os.getcwd(), "cross_tools")
     get_arch_list(args.archs)
     
     # check ssh param if currented
