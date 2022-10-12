@@ -75,6 +75,7 @@ void *shell_user(void *arg)
         pthread_mutex_lock(&mutex);
 
         ret = send_message(cmd, 1);  /* send command to rtos */
+        usleep(100 * 1000);  /* wait 100ms, some messages may be seperated */
         ret |= receive_message(reply, sizeof(reply), &reply_len);   /* receive reply from rtos */
 
         pthread_mutex_unlock(&mutex);

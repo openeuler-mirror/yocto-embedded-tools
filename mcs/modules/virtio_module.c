@@ -23,6 +23,7 @@ static struct rpmsg_virtio_device rvdev;
 static struct metal_io_region *io;
 struct virtqueue *vq[2];
 static metal_phys_addr_t shm_physmap[] = { SHM_START_ADDR };
+struct rpmsg_device *rdev;
 
 static unsigned char virtio_get_status(struct virtio_device *vdev)
 {
@@ -121,6 +122,8 @@ void virtio_init(void)
 		free(io);
 		return;
 	}
+
+	rdev = rpmsg_virtio_get_rpmsg_device(&rvdev);
 }
 
 void virtio_deinit(void)

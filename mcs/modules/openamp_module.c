@@ -70,8 +70,6 @@ int openamp_init(void)
 {
     int ret;
     struct remoteproc *rproc;
-    unsigned char message[100];
-    int len;
     int cpu_state;
 
     /* secondary core power state must be CPU_STATE_OFF, avoid initialize repeatedly */
@@ -99,10 +97,8 @@ int openamp_init(void)
         return ret;
     }
 
-    sleep(5);  /* wait for clientos booting */
     virtio_init();
-
-    (void)receive_message(message, sizeof(message), &len);  /* name service: endpoint matching */
+    rpmsg_module_init();
 
     return 0;
 }

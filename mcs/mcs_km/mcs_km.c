@@ -50,16 +50,24 @@ static irqreturn_t handle_clientos_ipi(int irq, void *data)
 void set_openamp_ipi(void)
 {
     int err;
+    struct irq_desc *desc;
 
-    err = request_percpu_irq(OPENAMP_IRQ, handle_clientos_ipi, "IPI", &cpu_number);
-    if (err) {
-        pr_err("mcs_km: request openamp irq failed(%d)\n", err);
-        return;
+    /* use IRQ8 as IPI7, init irq resource once */
+    desc = irq_to_desc(OPENAMP_IRQ);
+    if (!desc->action) {
+        err = request_percpu_irq(OPENAMP_IRQ, handle_clientos_ipi, "IPI", &cpu_number);
+        if (err) {
+            pr_err("mcs_km: request openamp irq failed(%d)\n", err);
+            return;
+        }
     }
 
-    preempt_disable(); /* fix kernel err message: using smp_processor_id() in preemptible */
-    enable_percpu_irq(OPENAMP_IRQ, 0);
-    preempt_enable();
+    /* In SMP, all the cores run Linux should be enabled */
+    if (!irq_percpu_is_enabled(OPENAMP_IRQ)) {
+        preempt_disable(); /* fix kernel err message: using smp_processor_id() in preemptible */
+        enable_percpu_irq(OPENAMP_IRQ, 0);
+        preempt_enable();
+    }
 
     return;
 }
@@ -320,11 +328,6 @@ module_init(mcs_dev_init);
 
 static void __exit mcs_dev_exit(void)
 {
-    preempt_disable();
-    disable_percpu_irq(OPENAMP_IRQ);
-    preempt_enable();
-    free_percpu_irq(OPENAMP_IRQ, &cpu_number);
-
 	device_destroy(mcs_class, MKDEV((unsigned int)mcs_major, 1));
 	class_destroy(mcs_class);
 	unregister_chrdev(mcs_major, MCS_DEVICE_NAME);

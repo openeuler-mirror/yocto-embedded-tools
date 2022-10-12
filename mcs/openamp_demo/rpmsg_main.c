@@ -15,7 +15,7 @@ static void cleanup(int sig)
 int rpmsg_app_master(void)
 {
     int ret;
-    int message = 0;
+    int message = 10;
     int len;
 
     printf("start processing OpenAMP demo...\n");

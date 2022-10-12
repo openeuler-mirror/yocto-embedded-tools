@@ -72,7 +72,7 @@ static int rproc_start(struct remoteproc *rproc)
 
 static int rproc_stop(struct remoteproc *rproc)
 {
-    /* TODO: send message to clientos, clientos shut itself down by PSCI */
+    /* TODO: send order to clientos by RPC service, clientos shut itself down by PSCI */
     send_message("shutdown", sizeof("shutdown"));
 
     return 0;
