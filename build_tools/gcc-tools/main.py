@@ -17,8 +17,6 @@ BASEDST = ""
 WHO = ""
 XTOOLSDIR = ""
 CROSSDIR = ""
-SSHCLI = SSHClient()
-SFTPCLI = None
 ARCHLIST = []
 
 
@@ -39,16 +37,6 @@ def init_args():
     return parser.parse_args()
 
 
-def release_ssh():
-    '''
-    release ssh resource
-    '''
-    global SSHCLI, SFTPCLI
-
-    SSHCLI.close()
-    SFTPCLI.close()
-
-
 def main():
     # init param
     args = init_args()
@@ -67,11 +55,6 @@ def main():
     # check ssh param if currented
     if not check_param():
         logger.error("param check is not pass")
-        return
-    
-    if args.is_test:
-        for_test()
-        release_ssh()
         return
     
     # running gcc compile brfore initing environment with this function
@@ -96,8 +79,6 @@ def main():
         return
     
     logger.info("all task finishd successful")
-    
-    release_ssh()
 
 
 def check_param():
@@ -131,34 +112,40 @@ def get_arch_list(archs : str):
         ARCHLIST.append(arch)
 
 
-def for_test():
-    global SFTPCLI, ARCHLIST
-    listdir = SFTPCLI.listdir()
-    logger.info(listdir)
-    
-    logger.info(ARCHLIST)
-
-
 def check_ssh():
     '''
     check ssh param if current
     '''
-    global USER, PASSWD, SKEY, IP, SSHCLI, SFTPCLI
     
-    SSHCLI.set_missing_host_key_policy(AutoAddPolicy)
+    sshCli, sshSftp = get_ssh_client()
+    if sshCli == None:
+        return False
+
+    sshSftp.close()
+    sshCli.close()
+    
+    return True
+
+
+def get_ssh_client():
+
+    global USER, PASSWD, SKEY, IP
+    
+    sshCli = SSHClient()
+
+    sshCli.set_missing_host_key_policy(AutoAddPolicy)
     
     try:
         if SKEY == "":    
-            SSHCLI.connect(hostname = IP, username = USER, password = PASSWD)
+            sshCli.connect(hostname = IP, username = USER, password = PASSWD)
         else:
             pri_key = RSAKey.from_private_key_file(SKEY)
-            SSHCLI.connect(hostname = IP, username = USER, pkey=pri_key)
-            
-        SFTPCLI = SSHCLI.open_sftp()
+            sshCli.connect(hostname = IP, username = USER, pkey=pri_key)
     except SSHException:
         logger.error("ssh init faild")
-    
-    return True
+        return None,None
+
+    return sshCli, sshCli.open_sftp()
 
 
 def prepare(cwd):
@@ -283,25 +270,33 @@ def upload(source, dst):
     '''
     upload to remote server
     '''
-    global SSHCLI, SFTPCLI, BASEDST
+    global BASEDST
     
     filename = os.path.basename(source)
     dst_file = os.path.join(dst, filename)
 
+    sshCli, sftpCli = get_ssh_client()
+    if sshCli == None:
+        logger.error("ssh connect faild in upload function")
+        return False
+
     try:
-        listfile = SFTPCLI.listdir(dst_file)
+        listfile = sftpCli.listdir(dst_file)
         if len(listfile) > 0:
             # delete dst directory
-            SSHCLI.exec_command("rm -rf {}".format(listfile))
-        SSHCLI.exec_command("mkdir -p {}".format(dst))
+            sshCli.exec_command("rm -rf {}".format(listfile))
+        sshCli.exec_command("mkdir -p {}".format(dst))
         logger.info("mkdir {} action successful".format(dst))
     except FileNotFoundError:
-        SSHCLI.exec_command("mkdir -p {}".format(dst))
+        sshCli.exec_command("mkdir -p {}".format(dst))
         logger.info("mkdir {} action successful".format(dst))
     
     # upload local resource to remote server
-    SFTPCLI.put(source, dst_file)
+    sftpCli.put(source, dst_file)
     logger.info("put {} action successful".format(dst))
+
+    sftpCli.close()
+    sshCli.close()
     
     return True
 
