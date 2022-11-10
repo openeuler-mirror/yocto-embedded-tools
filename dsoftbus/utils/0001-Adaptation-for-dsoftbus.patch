@@ -1,4 +1,4 @@
-From 0ab221f7828e67d59b310df9a69ed4b4399f525d Mon Sep 17 00:00:00 2001
+From 1e7842b01138c2313b2d8d8e736f461a9690c027 Mon Sep 17 00:00:00 2001
 From: "beiling.xie" <xiekunxun@huawei.com>
 Date: Wed, 21 Sep 2022 11:57:27 +0800
 Subject: [PATCH] Adaptation for dsoftbus
@@ -10,7 +10,7 @@ Signed-off-by: beiling.xie <xiekunxun@huawei.com>
  2 files changed, 5 insertions(+), 33 deletions(-)
 
 diff --git a/base/BUILD.gn b/base/BUILD.gn
-index 883b1ec..ca53096 100644
+index 883b1ec..723627b 100644
 --- a/base/BUILD.gn
 +++ b/base/BUILD.gn
 @@ -38,24 +38,8 @@ config("static_utils_config") {
@@ -58,7 +58,7 @@ index 883b1ec..ca53096 100644
 -  external_deps = [ "hilog_native:libhilog_base" ]
 -  part_name = "utils_base"
 +  deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
-+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
++  deps += [ "//depend:libhilog" ]
    install_images = [
      "system",
      "updater",
