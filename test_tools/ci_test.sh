@@ -280,6 +280,10 @@ function set_param() {
 }
 
 function main() {
+    # 环境准备
+    if [ -e /opt/buildtools/nativesdk/environment-setup-x86_64-pokysdk-linux ]; then
+        source /opt/buildtools/nativesdk/environment-setup-x86_64-pokysdk-linux
+    fi
     set_param "$@"
 
     run_test_dir="${TEST_WORK_DIR}/test_run_dir_${BUILD_ARCH}_${IMAGE_TYPE}"
