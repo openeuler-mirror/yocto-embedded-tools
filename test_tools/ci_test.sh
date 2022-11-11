@@ -119,10 +119,16 @@ function result_output() {
 }
 
 function test_result_ana() {
+    successNum=0
     for one_suite in ${run_suitecase[@]}; do
         checkFail=""
         if [ -e ${results_path}/${one_suite}/failed ]; then
             checkFail=$(ls ${results_path}/${one_suite}/failed/)
+        fi
+
+        if [ -e ${results_path}/${one_suite}/succeed ]; then
+            tmpSuccessNum=$(ls ${results_path}/${one_suite}/succeed/ | wc -l)
+            successNum=`expr $successNum + $tmpSuccessNum`
         fi
 
         for oneFail in ${checkFail[@]}; do
@@ -134,6 +140,10 @@ function test_result_ana() {
             fi
         done
     done
+
+    if [ $successNum -eq 0 ]; then
+        exitCode=1
+    fi
 
     result_output
 }
@@ -249,7 +259,7 @@ function set_param() {
         BUILD_ARCH="aarch64"
     fi
     if [ -z $BUILD_BRANCH ]; then
-        BUILD_BRANCH="master"
+        BUILD_BRANCH="openEuler-22.03-LTS-Next"
         if [[ ${BUILD_BRANCH} == "yocto_refactor" || ${BUILD_BRANCH} == "gitee_pages" ]]; then
             BUILD_BRANCH="master"
         fi
@@ -277,6 +287,11 @@ function set_param() {
 }
 
 function main() {
+    # 环境准备
+    if [ -e /opt/buildtools/nativesdk/environment-setup-x86_64-pokysdk-linux ]; then
+        source /opt/buildtools/nativesdk/environment-setup-x86_64-pokysdk-linux
+        export MUGEN_QEMU_ACL_DIR="/usr/local/oe-sdk-hardcoded-buildpath/sysroots/x86_64-pokysdk-linux/etc/qemu/"
+    fi
     set_param "$@"
 
     run_test_dir="${TEST_WORK_DIR}/test_run_dir_${BUILD_ARCH}_${IMAGE_TYPE}"
