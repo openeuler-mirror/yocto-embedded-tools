@@ -119,10 +119,16 @@ function result_output() {
 }
 
 function test_result_ana() {
+    successNum=0
     for one_suite in ${run_suitecase[@]}; do
         checkFail=""
         if [ -e ${results_path}/${one_suite}/failed ]; then
             checkFail=$(ls ${results_path}/${one_suite}/failed/)
+        fi
+
+        if [ -e ${results_path}/${one_suite}/succeed ]; then
+            tmpSuccessNum=$(ls ${results_path}/${one_suite}/succeed/ | wc -l)
+            successNum=`expr $successNum + $tmpSuccessNum`
         fi
 
         for oneFail in ${checkFail[@]}; do
@@ -134,6 +140,10 @@ function test_result_ana() {
             fi
         done
     done
+
+    if [ $successNum -eq 0 ]; then
+        exitCode=1
+    fi
 
     result_output
 }
@@ -266,16 +276,13 @@ function set_param() {
         # 设置需要执行的测试套, 目前一致, 后面一定会不同
         if [[ $IMAGE_TYPE == "std" ]]; then
             run_suitecase=("embedded_security_config_test" "embedded_os_basic_test")
-            if [ -z $ignoreFail ]; then
-                ignoreFail=("oe_test_check_file_sys_protect_005" "oe_test_check_network_firewall_001" "oe_test_check_network_firewall_002" "oe_test_check_ssh_config_002" "oe_test_check_file_sys_protect_004")
-            fi
         elif [[ $IMAGE_TYPE == "tiny" ]]; then
             run_suitecase=("embedded_tiny_image_test")
         fi
     fi
 
     if [ -z $qemu_option_wait_time ]; then
-        qemu_option_wait_time=120
+        qemu_option_wait_time=180
     fi
 }
 
@@ -283,6 +290,7 @@ function main() {
     # 环境准备
     if [ -e /opt/buildtools/nativesdk/environment-setup-x86_64-pokysdk-linux ]; then
         source /opt/buildtools/nativesdk/environment-setup-x86_64-pokysdk-linux
+        export MUGEN_QEMU_ACL_DIR="/usr/local/oe-sdk-hardcoded-buildpath/sysroots/x86_64-pokysdk-linux/etc/qemu/"
     fi
     set_param "$@"
 
